@@ -989,10 +989,29 @@
         }
     }
 
+    let lastDisplayedSources = [];
+
+    function filterMetricsDisplay() {
+        const input = document.getElementById('metricsQueryInput');
+        const q = input ? input.value.trim().toLowerCase() : '';
+        const badges = document.querySelectorAll('.metric-badge');
+        badges.forEach(b => {
+            const txt = b.textContent.toLowerCase();
+            if(!q || txt.includes(q) || (q==='panam' && (txt.includes('$')||txt.includes('₹')||txt.includes('15000')||txt.includes('22500'))) || (q==='date' && txt.includes('2026')) || (q==='rules' && txt.includes('clause'))) {
+                b.style.display = 'inline-block';
+                b.className = 'metric-badge text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-400/30 text-yellow-200 border-2 border-yellow-400 font-mono shadow-[0_0_10px_rgba(234,179,8,0.4)]';
+            } else {
+                b.style.display = 'inline-block';
+                b.className = 'metric-badge text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-mono opacity-40';
+            }
+        });
+    }
+
     function renderEvidence(ev, bSources, conflicts) {
         const el = document.getElementById('evidenceList');
         
         const sourcesToDisplay = (bSources && bSources.length) ? bSources : sources.map(s => ({ name: s.name, type: s.ext, preview: 'Document ingested successfully.', metrics: [] }));
+        lastDisplayedSources = sourcesToDisplay;
 
         if(!sourcesToDisplay.length) {
             el.innerHTML = `<div class="flex flex-col items-center justify-center gap-2 text-gray-600 text-sm py-16">
@@ -1004,6 +1023,20 @@
 
         const totalMetrics = sourcesToDisplay.reduce((acc, s) => acc + (s.metrics ? s.metrics.length : 0), 0);
         const formatTypes = [...new Set(sourcesToDisplay.map(s => (s.type || s.name.split('.').pop()).toUpperCase()))].join(', ');
+
+        const filterBar = `<div class="bg-[#151822] border border-yellow-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center gap-3 mb-4 shadow-[0_0_20px_rgba(234,179,8,0.1)]">
+            <div class="flex items-center gap-2 text-yellow-400 font-bold text-xs shrink-0">
+                <i data-lucide="filter" class="w-4 h-4"></i>
+                <span>Custom Metrics Focus (Tamil / Tanglish / English):</span>
+            </div>
+            <div class="flex-1 w-full relative">
+                <input type="text" id="metricsQueryInput" placeholder="Filter metrics focus (e.g. 'amount', 'panam', 'dates', 'policy', 'score', '15000')..." 
+                    class="w-full bg-[#0d0f18] border border-white/10 rounded-xl px-4 py-2 text-xs text-gray-200 focus:outline-none focus:border-yellow-500 font-sans" onkeyup="filterMetricsDisplay()">
+            </div>
+            <button onclick="filterMetricsDisplay()" class="py-2 px-4 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/40 text-xs font-bold rounded-xl transition flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Focus Metrics
+            </button>
+        </div>`;
 
         const summaryBanner = `<div class="bg-[#151822] border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
             <div class="flex items-center gap-3">
@@ -1032,7 +1065,7 @@
             const iconName   = isCSV ? 'sheet' : (isImg ? 'image' : (isPPT ? 'presentation' : 'file-text'));
 
             const metricsHtml = (s.metrics && s.metrics.length) 
-                ? s.metrics.map(m => `<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-mono">${m}</span>`).join(' ')
+                ? s.metrics.map(m => `<span class="metric-badge text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-mono transition-all">${m}</span>`).join(' ')
                 : `<span class="text-xs text-gray-500 italic">No numeric metrics extracted</span>`;
 
             const previewText = s.preview || "Text extracted successfully.";
@@ -1060,7 +1093,7 @@
             </div>`;
         }).join('');
 
-        el.innerHTML = summaryBanner + `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${sourceCards}</div>`;
+        el.innerHTML = filterBar + summaryBanner + `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${sourceCards}</div>`;
         lucide.createIcons();
     }
 
