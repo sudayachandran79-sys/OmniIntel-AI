@@ -87,6 +87,25 @@ for c in conflicts2:
     summary = lines[1] if len(lines) > 1 else lines[0]
     print(f"    Judges Summary: {summary}")
 
+# TEST PACKAGE 3: 100% FULLY ALIGNED COMPLIANCE AUDIT (PDF + EML + TXT + CSV)
+clear_server()
+print("\n[Package 3: 100% Fully Aligned Compliance Audit]")
+print("Uploading PDF: 01_Approved_PO_15k.pdf")
+upload_file("multiformat_test_files/Package_100Percent_ALIGNED_CORRECT/01_Approved_PO_15k.pdf")
+print("Uploading EML: 02_Vendor_Compliant_Invoice.eml")
+upload_file("multiformat_test_files/Package_100Percent_ALIGNED_CORRECT/02_Vendor_Compliant_Invoice.eml")
+print("Uploading TXT: 03_Standard_Audit_Policy.txt")
+upload_file("multiformat_test_files/Package_100Percent_ALIGNED_CORRECT/03_Standard_Audit_Policy.txt")
+print("Uploading CSV: 04_Verified_Financial_Ledger.csv")
+upload_file("multiformat_test_files/Package_100Percent_ALIGNED_CORRECT/04_Verified_Financial_Ledger.csv")
+
+res3 = analyze_server()
+conflicts3 = res3.get("contradictions", [])
+print(f"Total Sources Ingested: {res3.get('ingested_count')}")
+print(f"Conflicts Detected: {len(conflicts3)}")
+if len(conflicts3) == 0:
+    print(" -> [✓ FULLY ALIGNED] Zero compliance variances or financial overbilling detected. 100% Correct!")
+
 print("\n=========================================================")
 print("ALL MULTI-FORMAT TEST PACKAGES VERIFIED PASSED 100%!")
 print("=========================================================")

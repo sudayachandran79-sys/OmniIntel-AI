@@ -1,3 +1,5 @@
-FINANCIAL AUDIT REGULATION 2026
-Clause 7.1: All vendor invoices exceeding approved Purchase Order budget caps by more than $1,000 must be flagged for Critical Overbilling Audit.
-Target Completion Deadline: November 15, 2026.
+AUDIT COMPLIANCE POLICY & FINANCIAL RULES (CLAUSE 7.1)
+Audit Policy Rules:
+- PO budget cap approved for Phase 1 is $15,000.
+- Any vendor invoice overbilling exceeding $1,000 over the PO cap must be flagged as a Critical Overbilling Audit Discrepancy.
+- Payment terms mismatch (Net 15 vs Net 30) violates corporate compliance guidelines.

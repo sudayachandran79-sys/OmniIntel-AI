@@ -556,8 +556,8 @@ class MultiEnginePipeline:
 
         parsed_docs = [{"filename": s.filename, "facts": extract_facts(s.extracted_text), "text": s.extracted_text} for s in self.sources]
 
-        # Fact Comparison Engine (Fallback / Rule-Based)
-        if len(parsed_docs) >= 2 and not data["contradictions"]:
+        # Fact Comparison Engine (Fallback / Rule-Based, executed only if LLM is unavailable)
+        if len(parsed_docs) >= 2 and not data["contradictions"] and llm_res is None:
             for i in range(len(parsed_docs)):
                 for j in range(i + 1, len(parsed_docs)):
                     doc_a, doc_b = parsed_docs[i], parsed_docs[j]

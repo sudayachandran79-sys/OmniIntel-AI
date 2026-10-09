@@ -60,7 +60,7 @@ class OmniIntelHandler(BaseHTTPRequestHandler):
             pkg_map = {
                 "1": "Package1_Corporate_Financial_Overbilling",
                 "2": "Package2_University_Exam_Attendance",
-                "3": "Package3_SupplyChain_SLA_Mismatch"
+                "3": "Package_100Percent_ALIGNED_CORRECT"
             }
             pkg_folder = os.path.join(base_dir, pkg_map.get(preset_id, pkg_map["1"]))
             

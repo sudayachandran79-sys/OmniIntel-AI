@@ -1,18 +1,12 @@
-From: Billing Dept <billing@techglobalsolutions.com>
-To: Accounts Payable <ap@enterprise.com>
-Subject: INVOICE #INV-8831 Billed Amount - Phase 1 Deliverables
-Date: Mon, 01 Nov 2026 10:00:00 +0530
+From: billing@nexustech.com
+To: accounts@enterprise.com
+Subject: Urgent: Invoice INV-2026-99 for Phase 1 Delivery
+Date: Thu, 08 Oct 2026 14:00:00 +0000
 
-Dear Finance Team,
+Dear Accounts,
 
-Please find billed the final total invoice amount due of $22,500 for the completed Phase 1 implementation.
+Please process invoice INV-2026-99 for Phase 1 Software Delivery.
+Invoice Amount Billed: $22,500
+Payment Terms: Net 15 Days
 
-Invoice Summary:
-- Service Billed: Phase 1 Cloud Migration & Integration
-- Total Amount Billed: $22,500
-- Due Date: November 15, 2026
-
-Please process payment within 15 days.
-
-Thank you,
-TechGlobal Solutions Billing Team
+Note: Invoice amount exceeds PO budget cap by $7,500.

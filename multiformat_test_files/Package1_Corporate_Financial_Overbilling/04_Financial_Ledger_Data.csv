@@ -1,3 +1,4 @@
-Item_ID,Description,Approved_Cap,Billed_Amount,Variance
-ITEM-101,Phase 1 Cloud Migration,$15000,$22500,+$7500 OVERBILLING
-ITEM-102,Database Indexing,$5000,$5000,$0 MATCH
+Transaction_ID,Document,Amount,Terms,Status
+TX-801,01_Purchase_Order_Cap.pdf,15000,Net 30,CAP_APPROVED
+TX-802,02_Vendor_Invoice_Email.eml,22500,Net 15,OVERBILLING_DISCREPANCY
+TX-803,03_Audit_Policy_Terms.txt,15000,Net 30,CRITICAL_VIOLATION_TRIGGERED
