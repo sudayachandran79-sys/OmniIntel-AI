@@ -458,7 +458,7 @@
     // ── Init ───────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
-        renderStreams();
+        clearAll(); // Ensure 100% clean empty state on load/refresh
 
         const dz = document.getElementById('dropZone');
         ['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('border-blue-500/50'); }));
@@ -505,6 +505,13 @@
     }
 
     function addFiles(files) {
+        // Clear previous backend sources if starting a new custom upload session
+        if (!sources.length) {
+            backendSources = [];
+            lastConflicts = [];
+            fetch('http://localhost:8000/api/clear', { method: 'POST' }).catch(() => {});
+        }
+
         Array.from(files).forEach(f => {
             const ext = f.name.split('.').pop().toUpperCase();
             const meta = extMeta[ext] || { engine:'Universal Reader', icon:'file', color:'gray' };
@@ -555,7 +562,9 @@
     function clearAll() {
         sources = [];
         backendSources = [];
+        lastConflicts = [];
         renderStreams();
+        renderAll({ sources: [], contradictions: [], evidence: {money:[], dates:[]}, actions: [] });
         fetch('http://localhost:8000/api/clear', { method: 'POST' }).catch(()=>{});
     }
 
