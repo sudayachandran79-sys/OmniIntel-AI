@@ -1289,12 +1289,30 @@
         `).join('');
 
         // 2. Curved Discrepancy Arc Lines between Document Nodes (Bows OUTWARD to prevent overlapping text)
+        function findNodeIndex(srcName) {
+            if(!srcName) return -1;
+            const src = srcName.toLowerCase().replace(/^[0-9]+_/, '').trim();
+            for(let i=0; i<positions.length; i++) {
+                const posName = positions[i].name.toLowerCase().replace(/^[0-9]+_/, '').trim();
+                if(posName === src || posName.includes(src) || src.includes(posName)) return i;
+            }
+            return -1;
+        }
+
         if(conflicts.length > 0) {
+            const conflictPairs = new Set();
+
             svgLines += conflicts.map(c => {
-                const ai = nodeMap[c.source_a] !== undefined ? nodeMap[c.source_a] : 0;
-                const bi = nodeMap[c.source_b] !== undefined ? nodeMap[c.source_b] : Math.min(1, positions.length-1);
+                let ai = findNodeIndex(c.source_a);
+                let bi = findNodeIndex(c.source_b);
+                if (ai === -1) ai = 0;
+                if (bi === -1) bi = Math.min(1, positions.length - 1);
+                if (ai === bi && positions.length > 1) bi = (ai + 1) % positions.length;
+
+                conflictPairs.add(`${Math.min(ai,bi)}-${Math.max(ai,bi)}`);
+
                 const a = positions[ai], b = positions[bi];
-                if(!a || !b || ai === bi) return '';
+                if(!a || !b) return '';
                 
                 const mx = (a.x + b.x) / 2;
                 const my = (a.y + b.y) / 2;
@@ -1312,16 +1330,34 @@
                 const qy = my + ny * offsetDist * dir;
 
                 const label = c.title.length > 24 ? c.title.substring(0, 22) + "..." : c.title;
-                const w = Math.max(150, label.length * 7);
+                const w = Math.max(160, label.length * 7.5);
 
                 return `
-                    <g class="cursor-pointer group" onclick="switchTab('inspector')">
+                    <g class="cursor-pointer group" onclick="playBeep('click'); switchTab('inspector')">
                         <title>${c.title}&#10;Severity: ${c.severity}&#10;&#10;${(c.description||'').replace(/"/g, '&quot;')}</title>
-                        <path d="M ${a.x} ${a.y} Q ${qx} ${qy} ${b.x} ${b.y}" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="6,4" opacity="0.95"/>
-                        <rect x="${qx-(w/2)}" y="${qy-13}" width="${w}" height="26" rx="7" fill="#1c0d12" stroke="#ef4444" stroke-width="1.8" opacity="0.98"/>
-                        <text x="${qx}" y="${qy+4}" text-anchor="middle" fill="#f87171" font-size="9.5" font-family="monospace" font-weight="800">⚠ ${label.toUpperCase()}</text>
+                        <path d="M ${a.x} ${a.y} Q ${qx} ${qy} ${b.x} ${b.y}" fill="none" stroke="#ef4444" stroke-width="4" stroke-dasharray="6,4" filter="drop-shadow(0 0 10px #ef4444)"/>
+                        <rect x="${qx-(w/2)}" y="${qy-14}" width="${w}" height="28" rx="8" fill="#2a0a0e" stroke="#ef4444" stroke-width="2" class="shadow-[0_0_20px_rgba(239,68,68,0.5)]"/>
+                        <text x="${qx}" y="${qy+4}" text-anchor="middle" fill="#ff4d4d" font-size="10" font-family="monospace" font-weight="900" letter-spacing="0.5">⚠ ${label.toUpperCase()}</text>
                     </g>`;
             }).join('');
+
+            // Draw green alignment lines ONLY for non-conflicting adjacent pairs!
+            if(positions.length >= 2) {
+                for(let i=0; i<positions.length; i++) {
+                    const next = (i+1)%positions.length;
+                    const pairKey = `${Math.min(i,next)}-${Math.max(i,next)}`;
+                    if(!conflictPairs.has(pairKey)) {
+                        const a = positions[i], b = positions[next];
+                        const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+                        svgLines += `
+                            <g>
+                                <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#10b981" stroke-width="2" opacity="0.65"/>
+                                <rect x="${mx-45}" y="${my-10}" width="90" height="20" rx="4" fill="#0d1f18" stroke="#10b981" stroke-width="1" opacity="0.95"/>
+                                <text x="${mx}" y="${my+4}" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace" font-weight="700">✓ ALIGNED</text>
+                            </g>`;
+                    }
+                }
+            }
         } else if(positions.length >= 2) {
             // Draw clean green alignment ring between adjacent nodes
             for(let i=0; i<positions.length; i++) {
