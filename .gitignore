@@ -33,3 +33,9 @@ ENV/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Runtime DB & Cloud Backups
+edge_db/*.sqlite
+cloud_backups/*.json
+server.pid
+

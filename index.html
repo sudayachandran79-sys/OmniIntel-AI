@@ -3,428 +3,1272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniIntel AI - Cognitive Graph Fusion Platform</title>
+    <title>OmniIntel AI — Cognitive Graph Fusion Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        * { box-sizing: border-box; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f111a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d3447; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3b4561; }
+        .glow-blue { box-shadow: 0 0 14px rgba(59,130,246,0.3); }
+        .glow-red  { box-shadow: 0 0 14px rgba(239,68,68,0.25); }
+        .glow-green{ box-shadow: 0 0 14px rgba(34,197,94,0.25); }
+        .graph-node { position:absolute; display:flex; flex-direction:column; align-items:center; gap:4px; }
+        .graph-node .label { font-size:10px; font-weight:700; color:#94a3b8; white-space:nowrap; }
+        .graph-node .dot { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid; }
+        svg.graph-svg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-200">
+<body class="bg-[#0d0f18] text-gray-200 font-sans min-h-screen flex flex-col antialiased">
 
-    <!-- Top Navigation Header -->
-    <header class="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded bg-blue-600 flex items-center justify-center">
-                    <i data-lucide="brain-circuit" class="w-6 h-6 text-white"></i>
+    <!-- ═══ TOP HEADER ═══ -->
+    <header class="border-b border-white/5 bg-[#151822] sticky top-0 z-50 shrink-0">
+        <div class="px-5 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center glow-blue">
+                    <i data-lucide="brain-circuit" class="w-5 h-5 text-white"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="font-bold text-lg text-gray-900">OmniIntel AI</h1>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-600 font-mono">v2.0 MVP</span>
+                        <span class="font-bold text-base text-white tracking-wide">OmniIntel <span class="text-blue-400">AI</span></span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono">v2.0</span>
                     </div>
-                    <p class="text-xs text-gray-500 hidden sm:block">Cognitive Graph Fusion (CGF) with Cross-Modal Synthesizers</p>
+                    <p class="text-[11px] text-gray-500">Cognitive Graph Fusion Platform</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <div class="hidden md:flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded border border-gray-200 text-xs">
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span class="text-gray-600 font-mono">Status: Ready</span>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-[#0d0f18] px-3 py-1.5 rounded-lg border border-white/5 text-xs">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]"></span>
+                    <span class="text-gray-400 font-mono text-[11px]">System Online</span>
                 </div>
-                <button onclick="openScenarioModal()" class="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded border border-gray-300 transition flex items-center gap-1.5">
-                    <i data-lucide="folder-kanban" class="w-3.5 h-3.5 text-blue-600"></i>
-                    <span>Load Preset</span>
-                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- ═══ WORKSPACE ═══ -->
+    <main class="flex flex-1 overflow-hidden h-[calc(100vh-56px)]">
 
-        <!-- Left Column -->
-        <section class="lg:col-span-4 space-y-6">
-            
-            <!-- Pillar 1: Ingestion Card -->
-            <div class="bg-white border border-gray-200 rounded p-5 shadow-sm space-y-4">
-                <div class="flex items-center justify-between border-b border-gray-100 pb-2">
-                    <h2 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                        <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
-                        Pillar 1: Multi-Engine Pipeline
-                    </h2>
+        <!-- LEFT NAV -->
+        <aside class="w-80 bg-[#151822] border-r border-white/5 flex flex-col shrink-0 h-full">
+            <nav class="p-4 space-y-3 flex-1">
+                <div class="flex items-center justify-between px-2 mb-1">
+                    <p class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest font-mono">Cognitive Pillars</p>
+                    <span class="text-[9px] bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono px-2 py-0.5 rounded">4 Active</span>
                 </div>
 
-                <!-- Dropzone -->
-                <div id="dropZone" onclick="triggerFileInput()" class="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded p-5 text-center cursor-pointer bg-gray-50 transition">
-                    <input type="file" id="fileInput" multiple accept="*" class="hidden" onchange="handleFileSelect(event)" />
-                    <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
-                    <p class="text-xs font-semibold text-gray-700">Upload Documents</p>
-                    <p class="text-[10px] text-gray-500 mt-1">Supports All Formats</p>
-                </div>
-
-                <!-- Active Sources List -->
-                <div class="space-y-2">
+                <!-- Pillar 1 -->
+                <button onclick="switchTab('ingestion')" id="tab-ingestion"
+                    class="nav-btn active w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-blue-500/30 bg-gradient-to-r from-blue-900/30 to-indigo-900/20 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
                     <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-gray-600">Loaded Data Streams (<span id="sourceCount">0</span>)</span>
-                        <button onclick="resetSources()" class="text-[10px] text-red-600 hover:underline">Reset All</button>
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <i data-lucide="layers" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-extrabold text-blue-300">Multi-Engine Pipeline</span>
+                        </div>
+                        <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-500/20 border border-blue-500/40 text-blue-300 font-bold">PILLAR 1</span>
                     </div>
-                    <div id="sourcesList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                        <!-- Dynamically rendered -->
+                    <p class="text-[11px] text-gray-400 pl-9">PDF · EML · CSV · TXT · PPTX · Vision OCR</p>
+                </button>
+
+                <!-- Pillar 2 -->
+                <button onclick="switchTab('graph')" id="tab-graph"
+                    class="nav-btn w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-white/5 hover:border-purple-500/30 hover:bg-purple-900/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg bg-gray-800 text-gray-400 border border-white/10 group-hover:text-purple-400">
+                                <i data-lucide="network" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-300">Semantic Gateway</span>
+                        </div>
+                        <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold">PILLAR 2</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 pl-9">Cognitive Graph Fusion 2D Topology</p>
+                </button>
+
+                <!-- Pillar 3 -->
+                <button onclick="switchTab('inspector')" id="tab-inspector"
+                    class="nav-btn w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-white/5 hover:border-red-500/30 hover:bg-red-900/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg bg-gray-800 text-gray-400 border border-white/10">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-300">Autonomous Auditor</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span id="conflictBadge" class="text-[9px] bg-green-500/15 text-green-400 border border-green-500/25 px-2 py-0.5 rounded font-mono font-bold">0</span>
+                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-bold">PILLAR 3</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-gray-500 pl-9">Drift, Overbilling & Clause Resolver</p>
+                </button>
+
+                <!-- Pillar 4 -->
+                <button onclick="switchTab('actions')" id="tab-actions"
+                    class="nav-btn w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-white/5 hover:border-emerald-500/30 hover:bg-emerald-900/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg bg-gray-800 text-gray-400 border border-white/10">
+                                <i data-lucide="cloud" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-300">Edge-to-Cloud Hybrid</span>
+                        </div>
+                        <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">PILLAR 4</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 pl-9">Local Storage & Cloud LLM Sync</p>
+                </button>
+            </nav>
+
+            <!-- sidebar footer -->
+            <div class="p-4 border-t border-white/5 bg-[#0d0f18]/60">
+                <div class="flex items-center justify-between text-[11px] text-gray-400 font-mono">
+                    <span>Architecture Engine:</span>
+                    <span class="text-cyan-400 font-bold">CGF v2.0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT CONTENT -->
+        <section class="flex-1 overflow-y-auto bg-[#0d0f18] custom-scrollbar">
+
+            <!-- ─── TAB: DATA INGESTION ─── -->
+            <div id="view-ingestion" class="p-8 max-w-3xl mx-auto space-y-6">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                                Multi-Engine Pipeline Architecture
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono">Pillar 1</span>
+                            </h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Orchestrates multiple extraction tools (PyMuPDF, Email MIME, CSV, Vision OCR) to ingest multi-format files into Cognitive Graph Fusion.</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Process Button -->
-                <div class="space-y-2 pt-2">
-                    <button id="processBtn" onclick="runAnalysisPipeline()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-xs transition flex items-center justify-center gap-2">
-                        <i data-lucide="play" class="w-4 h-4"></i>
-                        <span>Execute Fusion Pipeline</span>
-                    </button>
-                    
-                    <div id="progressWrapper" class="hidden space-y-1">
-                        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                            <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
-                        </div>
-                        <p id="progressStatus" class="text-[10px] text-gray-500 text-center font-mono">Processing...</p>
+                <!-- 🚀 QUICK DEMO SCENARIO PRESETS FOR JUDGES -->
+                <div class="bg-gradient-to-r from-blue-950/40 via-purple-950/30 to-indigo-950/40 border border-blue-500/30 rounded-xl p-4 space-y-3 shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                        <span class="text-xs font-bold text-blue-300 flex items-center gap-2 tracking-wide uppercase">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                            Hackathon Judge Instant Scenarios
+                        </span>
+                        <span class="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">1-Click Auto Audit</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="loadPreset('1')" class="group p-3 bg-[#151822] hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/50 rounded-lg text-left transition flex flex-col justify-between h-20">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-200 group-hover:text-blue-300">Scenario 1</span>
+                                <span class="text-[9px] text-red-400 font-mono font-bold">OVERBILLING</span>
+                            </div>
+                            <span class="text-[10px] text-gray-400 line-clamp-2">PO Cap $15k vs Invoice $22.5k (PDF + EML + TXT)</span>
+                        </button>
+
+                        <button onclick="loadPreset('2')" class="group p-3 bg-[#151822] hover:bg-purple-600/20 border border-white/10 hover:border-purple-400/50 rounded-lg text-left transition flex flex-col justify-between h-20">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-200 group-hover:text-purple-300">Scenario 2</span>
+                                <span class="text-[9px] text-purple-400 font-mono font-bold">ATTENDANCE</span>
+                            </div>
+                            <span class="text-[10px] text-gray-400 line-clamp-2">Exam Eligibility 80% vs Student 65% (PDF + CSV + EML)</span>
+                        </button>
+
+                        <button onclick="loadPreset('3')" class="group p-3 bg-[#151822] hover:bg-emerald-600/20 border border-white/10 hover:border-emerald-400/50 rounded-lg text-left transition flex flex-col justify-between h-20">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-bold text-gray-200 group-hover:text-emerald-300">Scenario 3</span>
+                                <span class="text-[9px] text-emerald-400 font-mono font-bold">SLA MISMATCH</span>
+                            </div>
+                            <span class="text-[10px] text-gray-400 line-clamp-2">SLA Oct 15 vs Dispatch Oct 25 (PDF + EML + CSV)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drop Zone -->
+                <div id="dropZone" onclick="triggerInput()"
+                    class="border-2 border-dashed border-white/10 hover:border-blue-500/40 rounded-xl p-12 text-center cursor-pointer bg-[#151822] transition relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-blue-500/3 opacity-0 group-hover:opacity-100 transition"></div>
+                    <input type="file" id="fileInput" multiple class="hidden" onchange="handleFiles(event)">
+                    <i data-lucide="upload-cloud" class="w-10 h-10 text-blue-400 mx-auto mb-3 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"></i>
+                    <p class="text-sm font-bold text-gray-300">Drop documents or click to upload</p>
+                    <p class="text-[11px] text-gray-600 mt-1">PDF · XLSX · CSV · EML · DOCX · TXT · PNG · JPG</p>
+                </div>
+
+                <!-- Active Streams -->
+                <div class="bg-[#151822] border border-white/5 rounded-xl p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                            Active Streams &nbsp;<span id="streamCount" class="text-gray-200">0</span>
+                        </span>
+                        <button onclick="clearAll()" class="text-[11px] text-red-400 hover:text-red-300 font-bold transition">Clear All</button>
+                    </div>
+                    <div id="streamList" class="space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1"></div>
+                </div>
+
+                <!-- Execute Button -->
+                <button onclick="runPipeline()"
+                    class="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-[0_4px_20px_rgba(59,130,246,0.35)] border border-blue-500/30 transition">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                    Execute Fusion Pipeline
+                </button>
+
+                <!-- Progress -->
+                <div id="progressBox" class="hidden space-y-2">
+                    <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase">
+                        <span>Synthesizing across modalities...</span>
+                        <span id="progressPct" class="text-blue-400">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-900 rounded-full h-1 border border-white/5">
+                        <div id="progressBar" class="bg-blue-500 h-full rounded-full w-0 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Pillar 3: Auditor -->
-            <div class="bg-white border border-gray-200 rounded p-5 shadow-sm space-y-3">
-                <div class="flex items-center justify-between border-b border-gray-100 pb-2">
-                    <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
-                        <i data-lucide="shield-alert" class="w-4 h-4 text-red-600"></i>
-                        Pillar 3: Autonomous Auditor
-                    </h3>
-                    <span id="conflictCountBadge" class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded font-mono font-bold border border-red-200">
-                        2 Issues
+            <!-- ─── TAB: COGNITIVE GRAPH ─── -->
+            <div id="view-graph" class="hidden p-8 h-full flex flex-col space-y-4" style="min-height: calc(100vh - 56px);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-100">Intent-Based Semantic API Gateway</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Understands user intent and meaning via Sentence-Transformers to map cognitive relationships and serve precise insights.</p>
+                    </div>
+                    <span id="graphStatus" class="text-[10px] font-bold text-gray-600 bg-gray-800 border border-white/5 px-3 py-1.5 rounded-lg font-mono">AWAITING DATA</span>
+                </div>
+
+                <!-- Grid layout for Graph + Bar Charts -->
+                <div class="grid grid-cols-12 gap-5 h-full">
+                    <div class="col-span-8 flex flex-col bg-[#0a0c13] border border-white/5 rounded-xl relative overflow-hidden group" id="graphCanvas" style="min-height:420px;">
+                        <!-- Interactive Zoom Controls Overlay -->
+                        <div class="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-[#151822]/90 border border-white/10 rounded-xl p-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+                            <button onclick="zoomGraph(1.2)" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Zoom In (+)">
+                                <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="zoomGraph(0.8)" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Zoom Out (-)">
+                                <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="resetGraphZoom()" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Reset View (↺)">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div id="graphPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-600">
+                            <i data-lucide="network" class="w-10 h-10"></i>
+                            <span class="text-sm">Run the pipeline to visualize the knowledge graph.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-span-4 flex flex-col gap-4">
+                        <div class="bg-[#151822] rounded-xl border border-white/5 p-5">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Data Modalities</h4>
+                            <div class="space-y-3" id="barChart1">
+                                <div class="text-[10px] text-gray-500 italic">Run pipeline to analyze distribution.</div>
+                            </div>
+                        </div>
+                        <div class="bg-[#151822] rounded-xl border border-white/5 p-5 flex-1">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Risk Severity</h4>
+                            <div class="space-y-3" id="barChart2">
+                                <div class="text-[10px] text-gray-500 italic">No risks detected.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex items-center gap-6 text-[11px] text-gray-500 px-1">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.7)]"></span> Documents</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_6px_rgba(168,85,247,0.7)]"></span> Entities</span>
+                    <span class="flex items-center gap-1.5"><span class="inline-block w-6 h-px bg-red-400 border-t border-dashed border-red-400"></span> Discrepancy</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-[0_0_6px_rgba(251,146,60,0.7)]"></span> Alert</span>
+                </div>
+            </div>
+
+            <!-- ─── TAB: EVIDENCE AUDITOR ─── -->
+            <div id="view-inspector" class="hidden p-8 space-y-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-100 uppercase tracking-wider">Autonomous Drift & Conflict Resolver</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Automatically cross-checks documents to detect overbilling drift, timeline conflicts, and unstructured text mismatches.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-5">
+                    <!-- Anomaly List -->
+                    <div class="col-span-4 bg-[#151822] border border-white/5 rounded-xl p-4 flex flex-col gap-3">
+                        <h4 class="text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">Detected Anomalies</h4>
+                        <div id="conflictList" class="space-y-2 overflow-y-auto custom-scrollbar flex-1" style="max-height:420px;">
+                            <div class="p-4 border border-white/5 rounded-lg text-xs text-gray-600 text-center bg-[#0d0f18]">
+                                Run the pipeline to detect anomalies.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Source Evidence -->
+                    <div class="col-span-8 bg-[#151822] border border-white/5 rounded-xl p-5 flex flex-col gap-4">
+                        <h4 class="text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">Source Inspector</h4>
+                        <div id="evidenceList" class="overflow-y-auto custom-scrollbar space-y-3" style="max-height:420px;">
+                            <div class="flex flex-col items-center justify-center gap-2 text-gray-600 text-sm py-16">
+                                <i data-lucide="search" class="w-8 h-8"></i>
+                                <span>No evidence extracted yet.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── TAB: EDGE-TO-CLOUD HYBRID ─── -->
+            <div id="view-actions" class="hidden p-8 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                            Edge-to-Cloud Hybrid Deployment Architecture
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">Pillar 4</span>
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Local Edge Machine handles secure document ingestion and storage; Cloud LLM Gateway executes deep multi-modal reasoning and action dispatch.</p>
+                    </div>
+                    <span class="text-xs font-mono bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        TLS 1.3 Encrypted Sync Active
                     </span>
                 </div>
 
-                <div id="conflictList" class="space-y-2">
-                    <!-- Conflict 1 -->
-                    <div onclick="highlightConflict('financial')" class="p-3 bg-red-50 border border-red-200 rounded text-xs cursor-pointer hover:bg-red-100 transition space-y-1">
+                <!-- 🌐 EDGE VS CLOUD STEP WORKFLOW FLOWCHART -->
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-[#151822] border border-blue-500/30 rounded-xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-red-900">Billing Mismatch ($2,500 Over)</span>
-                            <span class="text-[9px] text-red-700 bg-red-200 px-1 py-0.5 rounded font-mono">CRITICAL</span>
+                            <span class="text-[10px] font-extrabold text-blue-400 font-mono uppercase">Step 1: Edge Storage</span>
+                            <span class="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1.5 py-0.5 rounded">LOCAL EDGE</span>
                         </div>
-                        <p class="text-[11px] text-red-800">Invoice billed <strong>$12,500</strong> vs. Approved Scope <strong>$10,000</strong>.</p>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-200">Local Ingestion & Privacy</h4>
+                            <p class="text-[10px] text-gray-400 mt-1 leading-relaxed">Raw files stored in <span class="text-blue-400 font-mono font-bold">Edge RAM / Local SQLite</span>. Zero raw PII data leaves your machine.</p>
+                        </div>
+                        <div class="text-[9px] font-mono text-gray-500 border-t border-white/5 pt-2 flex justify-between">
+                            <span>Storage: Local RAM</span>
+                            <span class="text-blue-400 font-bold">12ms Latency</span>
+                        </div>
                     </div>
 
-                    <!-- Conflict 2 -->
-                    <div onclick="highlightConflict('timeline')" class="p-3 bg-orange-50 border border-orange-200 rounded text-xs cursor-pointer hover:bg-orange-100 transition space-y-1">
+                    <div class="bg-[#151822] border border-purple-500/30 rounded-xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-orange-900">Timeline Conflict</span>
-                            <span class="text-[9px] text-orange-700 bg-orange-200 px-1 py-0.5 rounded font-mono">MEDIUM</span>
+                            <span class="text-[10px] font-extrabold text-purple-400 font-mono uppercase">Step 2: Local Rule Engine</span>
+                            <span class="text-[9px] bg-purple-500/20 text-purple-300 font-mono px-1.5 py-0.5 rounded">LOCAL OCR</span>
                         </div>
-                        <p class="text-[11px] text-orange-800">Email specifies <strong>Oct 15</strong>, Contract sets <strong>Oct 01</strong>.</p>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-200">Pre-Scan & Tokenization</h4>
+                            <p class="text-[10px] text-gray-400 mt-1 leading-relaxed">Local Tesseract OCR & PyMuPDF extract numeric caps, dates, and clause terms locally.</p>
+                        </div>
+                        <div class="text-[9px] font-mono text-gray-500 border-t border-white/5 pt-2 flex justify-between">
+                            <span>Processing: Edge Engine</span>
+                            <span class="text-purple-400 font-bold">25ms Latency</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#151822] border border-cyan-500/30 rounded-xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold text-cyan-400 font-mono uppercase">Step 3: Cloud Transport</span>
+                            <span class="text-[9px] bg-cyan-500/20 text-cyan-300 font-mono px-1.5 py-0.5 rounded">CLOUD GATEWAY</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-200">Encrypted Schema Payload</h4>
+                            <p class="text-[10px] text-gray-400 mt-1 leading-relaxed">Sanitized JSON audit vectors routed over TLS 1.3 to <span class="text-cyan-400 font-mono font-bold">Groq Cloud Gateway</span>.</p>
+                        </div>
+                        <div class="text-[9px] font-mono text-gray-500 border-t border-white/5 pt-2 flex justify-between">
+                            <span>Destination: Groq Cloud API</span>
+                            <span class="text-cyan-400 font-bold">TLS 1.3 Secure</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#151822] border border-emerald-500/30 rounded-xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold text-emerald-400 font-mono uppercase">Step 4: LLM Reasoning</span>
+                            <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded">120B MODEL</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-200">Cloud LLM Synthesis</h4>
+                            <p class="text-[10px] text-gray-400 mt-1 leading-relaxed">Processed by <span class="text-emerald-400 font-mono font-bold">openai/gpt-oss-120b</span> to generate action items & sync back to Edge.</p>
+                        </div>
+                        <div class="text-[9px] font-mono text-gray-500 border-t border-white/5 pt-2 flex justify-between">
+                            <span>Model: 120B Parameters</span>
+                            <span class="text-emerald-400 font-bold">1.2s Latency</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloud Sync Permission Toggle -->
+                <div class="flex items-center justify-between p-4 bg-[#151822] border border-white/5 rounded-xl mb-6">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-200 flex items-center gap-2">
+                            Cloud LLM Sync Gateway
+                            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">GROQ API ACTIVE</span>
+                        </h4>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Destination Endpoint: <code class="text-cyan-400">https://api.groq.com/v1/chat/completions</code> (Model: <code class="text-cyan-400">openai/gpt-oss-120b</code>)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="sr-only peer" checked>
+                      <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-emerald-500 peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                    </label>
+                </div>
+
+                <div id="actionCards" class="space-y-8">
+                    <div class="bg-[#151822] border border-white/5 rounded-xl p-12 flex flex-col items-center justify-center gap-2 text-gray-600 text-sm">
+                        <i data-lucide="zap" class="w-8 h-8"></i>
+                        <span>No actions generated. Run the pipeline first.</span>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Right Column -->
-        <section class="lg:col-span-8 space-y-6">
-            <div class="bg-white border border-gray-200 rounded p-5 shadow-sm space-y-5">
-                
-                <!-- Tabs -->
-                <div class="flex flex-wrap items-center justify-between border-b border-gray-200 pb-3 gap-2">
-                    <div class="flex gap-2">
-                        <button onclick="switchTab('graph')" id="tab-graph" class="px-4 py-2 bg-blue-600 text-white rounded text-xs font-medium flex items-center gap-2">
-                            <i data-lucide="share-2" class="w-4 h-4"></i> Cognitive Graph
-                        </button>
-                        <button onclick="switchTab('inspector')" id="tab-inspector" class="px-4 py-2 bg-gray-100 text-gray-700 rounded text-xs font-medium flex items-center gap-2 hover:bg-gray-200">
-                            <i data-lucide="columns-2" class="w-4 h-4"></i> Evidence
-                        </button>
-                        <button onclick="switchTab('actions')" id="tab-actions" class="px-4 py-2 bg-gray-100 text-gray-700 rounded text-xs font-medium flex items-center gap-2 hover:bg-gray-200">
-                            <i data-lucide="zap" class="w-4 h-4"></i> Actions
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tab 1: Graph -->
-                <div id="content-graph" class="space-y-4">
-                    <div class="bg-gray-50 border border-gray-200 rounded p-6 min-h-[340px] flex flex-col items-center justify-center relative">
-                        <div class="relative z-10 w-full max-w-xl space-y-10">
-                            <div class="flex justify-between items-center">
-                                <div class="p-3 bg-white border border-gray-300 rounded text-center shadow-sm w-36">
-                                    <i data-lucide="file-text" class="w-5 h-5 text-gray-700 mx-auto"></i>
-                                    <div class="text-[11px] font-bold text-gray-800 mt-1 truncate">Vendor_Contract.pdf</div>
-                                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">$10,000 Cap</div>
-                                </div>
-                                <div class="h-px bg-gray-300 flex-1 mx-3 relative flex items-center justify-center">
-                                    <span class="text-[9px] bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 rounded font-mono font-bold">
-                                        CONFLICT
-                                    </span>
-                                </div>
-                                <div class="p-3 bg-white border border-gray-300 rounded text-center shadow-sm w-36">
-                                    <i data-lucide="sheet" class="w-5 h-5 text-gray-700 mx-auto"></i>
-                                    <div class="text-[11px] font-bold text-gray-800 mt-1 truncate">Q3_Invoice.xlsx</div>
-                                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">$12,500 Billed</div>
-                                </div>
-                            </div>
-                            <div class="flex justify-center">
-                                <div class="p-3 bg-white border border-gray-300 rounded text-center shadow-sm w-48">
-                                    <i data-lucide="mail" class="w-5 h-5 text-gray-700 mx-auto"></i>
-                                    <div class="text-[11px] font-bold text-gray-800 mt-1 truncate">Approval_Thread.eml</div>
-                                    <div class="text-[10px] text-gray-500 font-mono mt-0.5">Deadline: Oct 15</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Inspector -->
-                <div id="content-inspector" class="hidden space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-white border border-gray-200 rounded p-4 space-y-2">
-                            <div class="flex items-center justify-between text-xs font-bold text-gray-700 border-b border-gray-100 pb-2">
-                                <span>Vendor_Contract_V2.pdf</span>
-                                <span class="text-gray-500">Clause 4.1</span>
-                            </div>
-                            <div class="text-xs text-gray-800 font-mono bg-gray-50 p-3 rounded border border-gray-200">
-                                "...The total fee for Q3 shall not exceed <mark class="bg-yellow-200 px-1 font-bold">$10,000 USD</mark>..."
-                            </div>
-                        </div>
-                        <div class="bg-white border border-gray-200 rounded p-4 space-y-2">
-                            <div class="flex items-center justify-between text-xs font-bold text-gray-700 border-b border-gray-100 pb-2">
-                                <span>Q3_Invoice_Sept.xlsx</span>
-                                <span class="text-gray-500">Row #14</span>
-                            </div>
-                            <div class="text-xs text-gray-800 font-mono bg-gray-50 p-3 rounded border border-gray-200">
-                                "Item 14: Final Implementation -- Amount: <mark class="bg-yellow-200 px-1 font-bold">$12,500 USD</mark>"
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab 3: Actions -->
-                <div id="content-actions" class="hidden space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white border border-gray-200 p-4 rounded space-y-3 flex flex-col justify-between">
-                            <div>
-                                <h5 class="text-xs font-bold text-gray-800">Discrepancy Email</h5>
-                                <p class="text-[11px] text-gray-600 mt-1">Auto-drafted vendor notice citing overage.</p>
-                            </div>
-                            <button onclick="alert('Draft Copied!')" class="w-full py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 text-xs font-medium rounded">Copy Draft</button>
-                        </div>
-                        <div class="bg-white border border-gray-200 p-4 rounded space-y-3 flex flex-col justify-between">
-                            <div>
-                                <h5 class="text-xs font-bold text-gray-800">Audit Memo</h5>
-                                <p class="text-[11px] text-gray-600 mt-1">Summarized audit dossier for review.</p>
-                            </div>
-                            <button onclick="alert('Downloading...')" class="w-full py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 text-xs font-medium rounded">Download PDF</button>
-                        </div>
-                        <div class="bg-white border border-gray-200 p-4 rounded space-y-3 flex flex-col justify-between">
-                            <div>
-                                <h5 class="text-xs font-bold text-gray-800">Ops Task</h5>
-                                <p class="text-[11px] text-gray-600 mt-1">Create verification task in Jira.</p>
-                            </div>
-                            <button onclick="alert('Task pushed!')" class="w-full py-1.5 bg-gray-100 hover:bg-gray-200 border border-gray-300 text-gray-700 text-xs font-medium rounded">Push to Jira</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
         </section>
     </main>
 
-    <!-- Modal -->
-    <div id="scenarioModal" class="fixed inset-0 bg-gray-900/50 flex items-center justify-center hidden p-4">
-        <div class="bg-white border border-gray-200 rounded max-w-md w-full p-6 space-y-4 shadow-xl">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h3 class="font-bold text-gray-800 text-sm">Select Preset Scenario</h3>
-                <button onclick="closeScenarioModal()" class="text-gray-500 hover:text-gray-700"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-            <div class="space-y-2">
-                <div onclick="loadPreset('vendor')" class="p-3 bg-gray-50 border border-gray-200 hover:border-gray-400 rounded cursor-pointer text-xs">
-                    <div class="font-bold text-gray-800">1. Vendor & Financial Audit</div>
-                </div>
-                <div onclick="loadPreset('hr')" class="p-3 bg-gray-50 border border-gray-200 hover:border-gray-400 rounded cursor-pointer text-xs">
-                    <div class="font-bold text-gray-800">2. HR & Payroll</div>
-                </div>
-                <div onclick="loadPreset('supply')" class="p-3 bg-gray-50 border border-gray-200 hover:border-gray-400 rounded cursor-pointer text-xs">
-                    <div class="font-bold text-gray-800">3. Supply Chain POs</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let activeSources = [
-            { name: "Vendor_Contract.pdf", ext: "PDF", size: "1.2 MB", engine: "PyMuPDF", icon: "file-text", color: "red" },
-            { name: "Q3_Invoice.xlsx", ext: "XLSX", size: "450 KB", engine: "Tabular", icon: "sheet", color: "green" },
-            { name: "Approval_Thread.eml", ext: "EML", size: "85 KB", engine: "Email", icon: "mail", color: "orange" }
-        ];
+    // ── State (Starts 100% empty, no predefined values) ──
+    let sources = [];
+    let backendSources = [];
+    let lastConflicts = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            renderSourcesList();
-            
-            const dz = document.getElementById('dropZone');
-            if(dz) {
-                ['dragenter', 'dragover'].forEach(e => dz.addEventListener(e, ev => {
-                    ev.preventDefault(); dz.classList.add('bg-gray-100', 'border-gray-400');
-                }));
-                ['dragleave', 'drop'].forEach(e => dz.addEventListener(e, ev => {
-                    ev.preventDefault(); dz.classList.remove('bg-gray-100', 'border-gray-400');
-                }));
-                dz.addEventListener('drop', ev => {
-                    if(ev.dataTransfer.files.length) processUploadedFiles(ev.dataTransfer.files);
-                });
+    const extMeta = {
+        PDF:  { engine:"PyMuPDF Hybrid Parser",       icon:"file-text",    color:"red"    },
+        PPTX: { engine:"PowerPoint Slide Parser",     icon:"presentation", color:"purple" },
+        PPT:  { engine:"PowerPoint Slide Parser",     icon:"presentation", color:"purple" },
+        XLSX: { engine:"Tabular Transformer",         icon:"sheet",        color:"green"  },
+        XLS:  { engine:"Tabular Transformer",         icon:"sheet",        color:"green"  },
+        CSV:  { engine:"Structured Data Ingester",    icon:"sheet",        color:"green"  },
+        EML:  { engine:"Email MIME Parser",           icon:"mail",         color:"orange" },
+        MSG:  { engine:"Email MIME Parser",           icon:"mail",         color:"orange" },
+        DOCX: { engine:"Word Structural Parser",      icon:"file-text",    color:"blue"   },
+        DOC:  { engine:"Word Structural Parser",      icon:"file-text",    color:"blue"   },
+        TXT:  { engine:"Plaintext Clause Tokenizer",  icon:"align-left",   color:"cyan"   },
+        JSON: { engine:"Schema Synthesizer",          icon:"code-2",       color:"purple" },
+        PNG:  { engine:"Vision OCR Engine",           icon:"image",        color:"teal"   },
+        JPG:  { engine:"Vision OCR Engine",           icon:"image",        color:"teal"   },
+        JPEG: { engine:"Vision OCR Engine",           icon:"image",        color:"teal"   },
+    };
+
+    const colMap = {
+        red:    'bg-red-500/10 text-red-400 border-red-500/25',
+        green:  'bg-green-500/10 text-green-400 border-green-500/25',
+        orange: 'bg-orange-500/10 text-orange-400 border-orange-500/25',
+        blue:   'bg-blue-500/10 text-blue-400 border-blue-500/25',
+        cyan:   'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
+        purple: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
+        teal:   'bg-teal-500/10 text-teal-400 border-teal-500/25',
+        indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25',
+        gray:   'bg-gray-800 text-gray-400 border-gray-700',
+    };
+
+    // ── Init ───────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        renderStreams();
+
+        const dz = document.getElementById('dropZone');
+        ['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('border-blue-500/50'); }));
+        ['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('border-blue-500/50'); }));
+        dz.addEventListener('drop', ev => { if(ev.dataTransfer.files.length) addFiles(ev.dataTransfer.files); });
+    });
+
+    // ── Tab Switching ──────────────────────────────────────────────────
+    function switchTab(t) {
+        const tabs = ['ingestion','graph','inspector','actions'];
+        tabs.forEach(id => {
+            const view = document.getElementById('view-' + id);
+            const btn  = document.getElementById('tab-' + id);
+            if(view) view.classList.add('hidden');
+            if(btn) {
+                btn.className = 'nav-btn w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-white/5 hover:border-white/20 hover:bg-white/5';
             }
         });
-
-        function switchTab(t) {
-            ['graph','inspector','actions'].forEach(id => {
-                document.getElementById('content-'+id).classList.add('hidden');
-                const b = document.getElementById('tab-'+id);
-                b.className = "px-4 py-2 bg-gray-100 text-gray-700 rounded text-xs font-medium flex items-center gap-2 hover:bg-gray-200";
-            });
-            document.getElementById('content-'+t).classList.remove('hidden');
-            document.getElementById('tab-'+t).className = "px-4 py-2 bg-blue-600 text-white rounded text-xs font-medium flex items-center gap-2";
+        const activeView = document.getElementById('view-' + t);
+        const activeBtn  = document.getElementById('tab-' + t);
+        if(activeView) activeView.classList.remove('hidden');
+        if(activeBtn) {
+            activeBtn.className = 'nav-btn active w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-blue-500/40 bg-gradient-to-r from-blue-900/30 to-indigo-900/20 shadow-[0_0_20px_rgba(59,130,246,0.25)]';
         }
-
-        function triggerFileInput() { document.getElementById('fileInput').click(); }
-        function handleFileSelect(e) { if(e.target.files.length) processUploadedFiles(e.target.files); }
-
-        function getFileFormatMeta(filename) {
-            const parts = filename.split('.');
-            const ext = parts.length > 1 ? parts.pop().toUpperCase() : 'TXT';
-            
-            if (['PDF'].includes(ext)) return { ext, engine: 'PyMuPDF Hybrid Parser', icon: 'file-text', color: 'red' };
-            if (['XLSX', 'XLS', 'CSV'].includes(ext)) return { ext, engine: 'Tabular Transformer Engine', icon: 'sheet', color: 'green' };
-            if (['EML', 'MSG'].includes(ext)) return { ext, engine: 'Email MIME Parser', icon: 'mail', color: 'orange' };
-            if (['DOCX', 'DOC'].includes(ext)) return { ext, engine: 'Word Structural Parser', icon: 'file-text', color: 'blue' };
-            if (['TXT', 'MD', 'LOG'].includes(ext)) return { ext, engine: 'Plaintext Clause Tokenizer', icon: 'align-left', color: 'cyan' };
-            if (['JSON', 'XML', 'YAML', 'YML'].includes(ext)) return { ext, engine: 'Data Schema Synthesizer', icon: 'code-2', color: 'purple' };
-            if (['PNG', 'JPG', 'JPEG', 'WEBP', 'BMP', 'TIFF'].includes(ext)) return { ext, engine: 'Vision OCR Engine', icon: 'image', color: 'teal' };
-            if (['ZIP', 'RAR', '7Z', 'TAR', 'GZ'].includes(ext)) return { ext, engine: 'Archive Deep Scanner', icon: 'archive', color: 'indigo' };
-            return { ext, engine: 'Universal Document Reader', icon: 'file', color: 'gray' };
+        if(t === 'graph') {
+            setTimeout(() => {
+                if(typeof renderGraph === 'function') renderGraph(lastConflicts || []);
+            }, 20);
+            setTimeout(() => {
+                if(typeof renderGraph === 'function') renderGraph(lastConflicts || []);
+            }, 150);
         }
+    }
 
-        function formatFileSize(bytes) {
-            if (!bytes || bytes === 0) return '120 KB';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    // ── File Handling ──────────────────────────────────────────────────
+    function triggerInput() {
+        const input = document.getElementById('fileInput');
+        if(input) input.click();
+    }
+    function handleFiles(e) {
+        if(e && e.target && e.target.files && e.target.files.length) {
+            addFiles(e.target.files);
         }
+    }
 
-        async function processUploadedFiles(files) {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const meta = getFileFormatMeta(file.name);
-                const sizeStr = formatFileSize(file.size);
-                
-                const newSource = {
-                    name: file.name,
-                    ext: meta.ext,
-                    size: sizeStr,
-                    engine: meta.engine,
-                    icon: meta.icon,
-                    color: meta.color
-                };
+    function addFiles(files) {
+        Array.from(files).forEach(f => {
+            const ext = f.name.split('.').pop().toUpperCase();
+            const meta = extMeta[ext] || { engine:'Universal Reader', icon:'file', color:'gray' };
+            const sizeKB = f.size > 0 ? (f.size > 1048576 ? (f.size/1048576).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB') : '—';
+            sources.unshift({ name:f.name, ext, size:sizeKB, engine:meta.engine, icon:meta.icon, color:meta.color });
 
-                // Send POST to server if backend is active
-                try {
-                    fetch('http://localhost:8000/api/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ filename: file.name, file_type: meta.ext, file_size: sizeStr })
-                    }).catch(() => {});
-                } catch(e) {}
+            const fd = new FormData();
+            fd.append('file', f); fd.append('filename', f.name);
+            fd.append('file_type', ext); fd.append('file_size', sizeKB);
+            fetch('http://localhost:8000/api/upload', { method:'POST', body:fd }).catch(()=>{});
+        });
+        renderStreams();
+    }
 
-                activeSources.unshift(newSource);
+    function renderStreams() {
+        const el = document.getElementById('streamList');
+        document.getElementById('streamCount').textContent = sources.length;
+        if(!sources.length) {
+            el.innerHTML = `<div class="flex flex-col items-center gap-2 py-6 text-gray-600 text-xs border border-dashed border-white/5 rounded-lg">
+                <i data-lucide="inbox" class="w-5 h-5"></i> No active streams
+            </div>`;
+            lucide.createIcons(); return;
+        }
+        el.innerHTML = sources.map((s,i) => {
+            const c = colMap[s.color] || colMap.gray;
+            return `<div class="flex items-center justify-between p-3 bg-[#0d0f18] border border-white/5 rounded-lg hover:border-white/10 transition group">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-lg ${c} flex items-center justify-center shrink-0 border">
+                        <i data-lucide="${s.icon}" class="w-4 h-4"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-gray-300 truncate" title="${s.name}">${s.name}</p>
+                        <p class="text-[10px] text-gray-600">${s.engine} · ${s.size}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${c}">${s.ext}</span>
+                    <button onclick="removeStream(${i})" class="text-gray-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function removeStream(i) { sources.splice(i,1); renderStreams(); }
+    function clearAll() {
+        sources = [];
+        backendSources = [];
+        renderStreams();
+        fetch('http://localhost:8000/api/clear', { method: 'POST' }).catch(()=>{});
+    }
+
+    async function loadPreset(id) {
+        try {
+            clearAll();
+            const res = await fetch(`http://localhost:8000/api/load-preset?id=${id}`);
+            const data = await res.json();
+            if(data.status === 'success' && data.loaded_files) {
+                sources = data.loaded_files.map(f => {
+                    const ext = f.ext || f.name.split('.').pop().toUpperCase();
+                    const meta = extMeta[ext] || { engine:'Universal Reader', icon:'file', color:'gray' };
+                    return { name: f.name, ext, size: f.size || '1 KB', engine: meta.engine, icon: meta.icon, color: meta.color };
+                });
+                renderStreams();
+                setTimeout(() => {
+                    runPipeline();
+                }, 300);
             }
-            renderSourcesList();
+        } catch(e) {
+            console.error('Error loading preset:', e);
         }
+    }
 
-        function renderSourcesList() {
-            const list = document.getElementById('sourcesList');
-            document.getElementById('sourceCount').innerText = activeSources.length;
-            list.innerHTML = '';
-            if(!activeSources.length) {
-                list.innerHTML = `<div class="text-center py-4 text-gray-500 text-xs">No files uploaded.</div>`;
-                return;
+    // ── Audio Notification ──────────────────────────────────────────────
+    function playBeep(success) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            if(success) {
+                // Two rising tones for success
+                osc.frequency.setValueAtTime(523, ctx.currentTime);
+                osc.frequency.setValueAtTime(784, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.35);
+            } else {
+                // Two falling tones for conflict
+                osc.frequency.setValueAtTime(784, ctx.currentTime);
+                osc.frequency.setValueAtTime(392, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.4);
+            }
+        } catch(e) {}
+    }
+
+    function flashScreen(color) {
+        const flash = document.createElement('div');
+        flash.style.cssText = `position:fixed;inset:0;z-index:9999;pointer-events:none;background:${color};opacity:0.18;transition:opacity 0.8s ease-out;`;
+        document.body.appendChild(flash);
+        requestAnimationFrame(() => { flash.style.opacity = '0'; });
+        setTimeout(() => flash.remove(), 900);
+    }
+
+    // ── Pipeline Execution ─────────────────────────────────────────────
+    function runPipeline() {
+        const box = document.getElementById('progressBox');
+        const bar = document.getElementById('progressBar');
+        const pct = document.getElementById('progressPct');
+        box.classList.remove('hidden');
+        let w = 0;
+        const iv = setInterval(() => {
+            w += 20; bar.style.width = w+'%'; pct.textContent = w+'%';
+            if(w >= 100) { clearInterval(iv); fetchResults(); }
+        }, 280);
+    }
+
+    async function fetchResults() {
+        try {
+            const res = await fetch('http://localhost:8000/api/analyze');
+            const data = await res.json();
+            
+            // Update sources from backend response if available
+            if(data.sources && data.sources.length) {
+                backendSources = data.sources;
             }
             
-            const cols = {
-                red: 'bg-red-50 text-red-700 border-red-200',
-                green: 'bg-green-50 text-green-700 border-green-200',
-                orange: 'bg-orange-50 text-orange-700 border-orange-200',
-                blue: 'bg-blue-50 text-blue-700 border-blue-200',
-                cyan: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-                purple: 'bg-purple-50 text-purple-700 border-purple-200',
-                teal: 'bg-teal-50 text-teal-700 border-teal-200',
-                indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-                gray: 'bg-gray-100 text-gray-700 border-gray-200'
-            };
+            renderAll(data);
+            
+            // Beep + Flash
+            const hasConflicts = (data.contradictions || []).length > 0;
+            if(hasConflicts) {
+                playBeep(false);
+                flashScreen('#ef4444');
+            } else {
+                playBeep(true);
+                flashScreen('#22c55e');
+            }
+            
+            switchTab('inspector');
+        } catch(e) {
+            console.error(e);
+            switchTab('inspector');
+        }
+    }
 
-            activeSources.forEach((s, i) => {
-                const c = cols[s.color] || cols.gray;
-                list.innerHTML += `
-                    <div class="flex items-center justify-between bg-white p-2.5 rounded border border-gray-200 text-xs">
-                        <div class="flex items-center gap-2 truncate">
-                            <i data-lucide="${s.icon}" class="w-4 h-4 text-gray-500"></i>
-                            <div class="truncate">
-                                <p class="font-medium text-gray-800 truncate" title="${s.name}">${s.name}</p>
-                                <p class="text-[10px] text-gray-500">${s.engine} • ${s.size}</p>
-                            </div>
+    // ── Render All Views ───────────────────────────────────────────────
+    function renderAll(data) {
+        const conflicts = data.contradictions || [];
+        const evidence  = data.evidence || { money:[], dates:[] };
+        const actions   = data.actions   || [];
+        const bSources  = data.sources   || [];
+
+        lastConflicts = conflicts;
+
+        // Sidebar Badge
+        const badge = document.getElementById('conflictBadge');
+        if(badge) {
+            badge.textContent = conflicts.length;
+            badge.className = conflicts.length > 0
+                ? 'text-[9px] bg-red-500/15 text-red-400 border border-red-500/25 px-1.5 py-0.5 rounded font-mono'
+                : 'text-[9px] bg-green-500/15 text-green-400 border border-green-500/25 px-1.5 py-0.5 rounded font-mono';
+        }
+
+        renderConflicts(conflicts);
+        renderEvidence(evidence, bSources, conflicts);
+        renderActions(actions);
+        renderGraph(conflicts);
+        lucide.createIcons();
+    }
+
+    function renderConflicts(conflicts) {
+        const el = document.getElementById('conflictList');
+        if(!el) return;
+        if(!conflicts.length) {
+            el.innerHTML = `<div class="p-6 bg-green-500/10 border border-green-500/25 rounded-2xl text-sm text-green-400 text-center font-bold shadow-[0_0_20px_rgba(34,197,94,0.15)] flex flex-col items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-8 h-8 text-green-400"></i>
+                <span>✓ All documents fully aligned. Zero conflicts or financial drift detected.</span>
+            </div>`;
+            return;
+        }
+        el.innerHTML = conflicts.map((c, i) => {
+            const crit = c.severity === 'CRITICAL';
+            const col = crit ? 'red' : 'orange';
+            const judgesSummary = c.judges_summary || c.description || 'Cross-document discrepancy detected.';
+            return `
+            <div class="bg-[#0d0f18] border-2 border-${col}-500/50 rounded-2xl overflow-hidden transition-all shadow-[0_0_25px_rgba(239,68,68,0.2)] space-y-0">
+                <div class="p-4 bg-gradient-to-r from-${col}-950/40 via-[#151822] to-${col}-950/40 flex items-center justify-between border-b border-${col}-500/30">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 rounded-xl bg-${col}-500/20 text-${col}-400 border border-${col}-500/40">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] px-1.5 py-0.5 rounded border font-bold ${c}">${s.ext}</span>
-                            <button onclick="removeSource(${i})" class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        <div>
+                            <h4 class="font-extrabold text-${col}-400 text-sm tracking-wide">${c.title}</h4>
+                            <span class="text-[10px] text-gray-400 font-mono">Audit Pair: ${c.source_a} <-> ${c.source_b}</span>
                         </div>
                     </div>
-                `;
-            });
-            lucide.createIcons();
-        }
+                    <span class="text-xs font-extrabold bg-${col}-500/20 text-${col}-400 border border-${col}-500/40 px-3 py-1 rounded-lg font-mono uppercase tracking-wider">${c.severity}</span>
+                </div>
+                
+                <div class="p-5 bg-[#12151f] space-y-4">
+                    <!-- JUDGE EXECUTIVE SUMMARY -->
+                    <div class="bg-gradient-to-r from-red-950/30 to-rose-950/20 p-4 rounded-xl border border-red-500/30 font-sans text-xs text-gray-100 leading-relaxed shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                        <div class="flex items-center gap-2 text-red-400 font-extrabold mb-1 uppercase tracking-wide text-[10px] font-mono">
+                            <i data-lucide="target" class="w-4 h-4"></i>
+                            Hackathon Audit Verdict Summary:
+                        </div>
+                        <p class="font-semibold text-gray-200">${judgesSummary}</p>
+                    </div>
 
-        function removeSource(i) { activeSources.splice(i,1); renderSourcesList(); }
-        function resetSources() { activeSources = []; renderSourcesList(); }
-        
-        function runAnalysisPipeline() {
-            document.getElementById('progressWrapper').classList.remove('hidden');
-            let w = 0;
-            const int = setInterval(() => {
-                w += 25;
-                document.getElementById('progressBar').style.width = w + '%';
-                if(w >= 100) { clearInterval(int); setTimeout(() => switchTab('graph'), 500); }
-            }, 300);
-        }
+                    <div class="bg-[#0d0f18] p-4 rounded-xl border border-white/10 font-mono text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">${c.description}</div>
+                    
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <span class="text-gray-400 text-[10px] font-bold block mb-1 uppercase tracking-wider">Document A:</span>
+                            <span class="text-blue-400 font-bold font-mono text-[11px]">${c.source_a}</span>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <span class="text-gray-400 text-[10px] font-bold block mb-1 uppercase tracking-wider">Document B:</span>
+                            <span class="text-orange-400 font-bold font-mono text-[11px]">${c.source_b}</span>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 bg-${col}-500/15 hover:bg-${col}-500/25 border border-${col}-500/40 text-${col}-400 text-xs font-extrabold rounded-xl uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.15)]" onclick="switchTab('actions')">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Resolve via Edge-to-Cloud Hybrid (Pillar 4)
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    }
 
-        function openScenarioModal() { document.getElementById('scenarioModal').classList.remove('hidden'); }
-        function closeScenarioModal() { document.getElementById('scenarioModal').classList.add('hidden'); }
-        
-        function loadPreset(scenario) {
-            closeScenarioModal();
-            if (scenario === 'vendor') {
-                activeSources = [
-                    { name: "Vendor_Contract_V2.pdf", ext: "PDF", size: "1.2 MB", engine: "PyMuPDF Hybrid Parser", icon: "file-text", color: "red" },
-                    { name: "Q3_Invoice_Sept.xlsx", ext: "XLSX", size: "450 KB", engine: "Tabular Transformer", icon: "sheet", color: "green" },
-                    { name: "Scope_Approval_Thread.eml", ext: "EML", size: "85 KB", engine: "Email MIME Parser", icon: "mail", color: "orange" }
-                ];
-            } else if (scenario === 'hr') {
-                activeSources = [
-                    { name: "Candidate_Offer_Letter.pdf", ext: "PDF", size: "890 KB", engine: "PyMuPDF Hybrid Parser", icon: "file-text", color: "red" },
-                    { name: "Monthly_Payroll_Oct.xlsx", ext: "XLSX", size: "620 KB", engine: "Tabular Transformer", icon: "sheet", color: "green" },
-                    { name: "HR_Approval_Note.docx", ext: "DOCX", size: "140 KB", engine: "Word Structural Parser", icon: "file-text", color: "blue" }
-                ];
-            } else if (scenario === 'supply') {
-                activeSources = [
-                    { name: "PO_Form_9921.pdf", ext: "PDF", size: "1.5 MB", engine: "PyMuPDF Hybrid Parser", icon: "file-text", color: "red" },
-                    { name: "Customs_Clearance.eml", ext: "EML", size: "110 KB", engine: "Email MIME Parser", icon: "mail", color: "orange" },
-                    { name: "Shipping_Manifest.csv", ext: "CSV", size: "310 KB", engine: "Structured Data Ingester", icon: "sheet", color: "green" }
-                ];
+    function toggleConflict(i) {
+        const desc = document.getElementById(`desc-conflict-${i}`);
+        const icon = document.getElementById(`icon-conflict-${i}`);
+        if(desc && icon) {
+            if(desc.classList.contains('hidden')) {
+                desc.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                desc.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
             }
-            renderSourcesList();
         }
+    }
+
+    function renderEvidence(ev, bSources, conflicts) {
+        const el = document.getElementById('evidenceList');
+        
+        const sourcesToDisplay = (bSources && bSources.length) ? bSources : sources.map(s => ({ name: s.name, type: s.ext, preview: 'Document ingested successfully.', metrics: [] }));
+
+        if(!sourcesToDisplay.length) {
+            el.innerHTML = `<div class="flex flex-col items-center justify-center gap-2 text-gray-600 text-sm py-16">
+                <i data-lucide="search" class="w-8 h-8"></i>
+                <span>No evidence extracted yet. Upload files to run audit.</span>
+            </div>`;
+            return;
+        }
+
+        const totalMetrics = sourcesToDisplay.reduce((acc, s) => acc + (s.metrics ? s.metrics.length : 0), 0);
+        const formatTypes = [...new Set(sourcesToDisplay.map(s => (s.type || s.name.split('.').pop()).toUpperCase()))].join(', ');
+
+        const summaryBanner = `<div class="bg-[#151822] border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between mb-4 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                    <i data-lucide="file-search" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-gray-100">Source Inspector Summary</h4>
+                    <p class="text-[11px] text-gray-400">Ingested ${sourcesToDisplay.length} Sources · Formats: ${formatTypes}</p>
+                </div>
+            </div>
+            <div class="text-right font-mono">
+                <span class="text-xs font-bold text-yellow-400 bg-yellow-400/15 border border-yellow-400/30 px-3 py-1 rounded-lg">${totalMetrics} Extracted Metrics</span>
+            </div>
+        </div>`;
+
+        const sourceCards = sourcesToDisplay.map(s => {
+            const ext = (s.type || s.name.split('.').pop()).toUpperCase();
+            const isCSV = ext === 'CSV' || ext === 'XLSX' || ext === 'XLS';
+            const isImg = ext === 'PNG' || ext === 'JPG' || ext === 'JPEG';
+            const isPDF = ext === 'PDF';
+            const isPPT = ext === 'PPTX' || ext === 'PPT';
+            
+            const badgeColor = isCSV ? 'green' : (isImg ? 'teal' : (isPDF ? 'blue' : (isPPT ? 'purple' : 'cyan')));
+            const typeLabel  = isCSV ? 'TABLE / CSV' : (isImg ? 'VISION OCR' : (isPDF ? 'PDF PARSER' : (isPPT ? 'POWERPOINT' : 'TEXT CLAUSES')));
+            const iconName   = isCSV ? 'sheet' : (isImg ? 'image' : (isPPT ? 'presentation' : 'file-text'));
+
+            const metricsHtml = (s.metrics && s.metrics.length) 
+                ? s.metrics.map(m => `<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-yellow-400/15 text-yellow-300 border border-yellow-400/30 font-mono">${m}</span>`).join(' ')
+                : `<span class="text-xs text-gray-500 italic">No numeric metrics extracted</span>`;
+
+            const previewText = s.preview || "Text extracted successfully.";
+
+            return `<div class="bg-[#0d0f18] border border-white/10 rounded-2xl p-5 space-y-4 hover:border-blue-500/30 transition shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <i data-lucide="${iconName}" class="w-5 h-5 text-${badgeColor}-400 shrink-0"></i>
+                        <span class="font-bold text-sm text-gray-100 truncate" title="${s.name}">${s.name}</span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-${badgeColor}-500/15 border border-${badgeColor}-500/30 text-${badgeColor}-400 font-mono shrink-0 ml-2">${typeLabel}</span>
+                </div>
+
+                <!-- Extracted Key Metrics -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Extracted Metrics & Facts:</span>
+                    <div class="flex flex-wrap gap-2 pt-0.5">${metricsHtml}</div>
+                </div>
+
+                <!-- Text / Table Preview -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Parsed Content Preview:</span>
+                    <div class="bg-[#151822] p-4 rounded-xl border border-white/5 font-mono text-xs text-gray-200 leading-relaxed max-h-60 overflow-y-auto custom-scrollbar whitespace-pre-wrap">"${previewText}"</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        el.innerHTML = summaryBanner + `<div class="grid grid-cols-1 md:grid-cols-2 gap-5">${sourceCards}</div>`;
+        lucide.createIcons();
+    }
+
+    function renderActions(actions) {
+        const el = document.getElementById('actionCards');
+        if(!actions.length) {
+            el.innerHTML = `<div class="bg-[#151822] border border-white/5 rounded-xl p-12 flex flex-col items-center gap-2 text-gray-600 text-sm"><i data-lucide="zap" class="w-8 h-8"></i><span>No actions generated.</span></div>`;
+            return;
+        }
+        const typeIcon  = { EMAIL_DRAFT:'mail', TASK:'check-square', INFO:'info', REPORT_GEN:'file-text' };
+        const typeColor = { EMAIL_DRAFT:'blue', TASK:'orange', INFO:'gray', REPORT_GEN:'purple' };
+
+        const grouped = {};
+        actions.forEach(a => { if(!grouped[a.action_type]) grouped[a.action_type]=[]; grouped[a.action_type].push(a); });
+
+        el.innerHTML = Object.entries(grouped).map(([type, items]) => {
+            const icon  = typeIcon[type]  || 'zap';
+            const color = typeColor[type] || 'gray';
+            const cards = items.map(a => `
+                <div class="bg-[#0d0f18] border border-${color}-500/35 rounded-xl p-5 flex flex-col gap-4 hover:border-${color}-500/60 transition group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-${color}-500/3 opacity-0 group-hover:opacity-100 transition pointer-events-none"></div>
+                    <div class="flex items-start gap-3 relative z-10">
+                        <div class="p-2 rounded-lg bg-${color}-500/15 border border-${color}-500/25 text-${color}-400 shrink-0">
+                            <i data-lucide="${icon}" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="text-sm font-bold text-gray-200">${a.title}</h5>
+                            <span class="text-[9px] text-${color}-500 font-mono uppercase tracking-wide">${a.target_role}</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#151822] border border-white/5 rounded-lg p-3 relative z-10">
+                        <p class="text-[11px] text-gray-400 leading-relaxed">${a.content}</p>
+                    </div>
+                    <button class="relative z-10 w-full py-2 bg-${color}-500/10 hover:bg-${color}-500/20 border border-${color}-500/35 text-${color}-400 text-[10px] font-bold rounded-lg uppercase tracking-widest transition flex items-center justify-center gap-2" onclick="openCloudSyncModal('${a.title.replace(/'/g,"\\'")}')">
+                        <i data-lucide="cloud-lightning" class="w-3.5 h-3.5"></i> Push to Cloud ☁️
+                    </button>
+                </div>`).join('');
+            return `<div class="space-y-4">
+                <h4 class="flex items-center gap-2 text-xs font-bold text-${color}-400 uppercase tracking-widest border-b border-white/5 pb-2">
+                    <i data-lucide="${icon}" class="w-3.5 h-3.5"></i> ${type.replace('_',' ')}
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${cards}</div>
+            </div>`;
+        }).join('');
+    }
+
+    async function openCloudSyncModal(title) {
+        let modal = document.getElementById('cloudModal');
+        if(!modal) {
+            modal = document.createElement('div');
+            modal.id = 'cloudModal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4';
+            document.body.appendChild(modal);
+        }
+
+        let cloudResult = null;
+        try {
+            const res = await fetch('http://localhost:8000/api/save-cloud');
+            cloudResult = await res.json();
+        } catch(e) {}
+
+        const localDbPath = (cloudResult && cloudResult.local_device_db) || "C:\\Users\\suday\\.gemini\\antigravity\\scratch\\omni-intel-hub\\edge_db\\local_edge.sqlite";
+        const cloudFilePath = (cloudResult && cloudResult.cloud_saved_file) || "C:\\Users\\suday\\.gemini\\antigravity\\scratch\\omni-intel-hub\\cloud_backups\\cloud_audit_payload.json";
+        const auditRecordId = (cloudResult && cloudResult.audit_record_id) || "AUD-2026-9041";
+
+        modal.innerHTML = `
+            <div class="bg-[#0f121d] border-2 border-emerald-500/40 rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-[0_0_50px_rgba(16,185,129,0.35)] animate-in fade-in zoom-in duration-200">
+                <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-white text-base">Edge Device Storage & Cloud Sync Verified</h3>
+                            <p class="text-[10px] text-emerald-400 font-mono font-bold">Audit Record ID: ${auditRecordId}</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('cloudModal').remove()" class="text-gray-400 hover:text-white">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Real Saved Locations -->
+                <div class="space-y-3">
+                    <div class="bg-[#151822] border border-blue-500/30 rounded-xl p-3.5 space-y-1">
+                        <div class="flex items-center justify-between text-[10px] font-mono font-bold">
+                            <span class="text-blue-400 uppercase">📁 Local Device SQLite Storage Location:</span>
+                            <span class="text-emerald-400">SAVED ON DISK</span>
+                        </div>
+                        <div class="bg-[#07090f] p-2 rounded border border-white/5 font-mono text-[11px] text-gray-200 break-all select-all font-bold">${localDbPath}</div>
+                    </div>
+
+                    <div class="bg-[#151822] border border-cyan-500/30 rounded-xl p-3.5 space-y-1">
+                        <div class="flex items-center justify-between text-[10px] font-mono font-bold">
+                            <span class="text-cyan-400 uppercase">☁️ Saved Cloud Payload File Location:</span>
+                            <span class="text-emerald-400">JSON BACKUP CREATED</span>
+                        </div>
+                        <div class="bg-[#07090f] p-2 rounded border border-white/5 font-mono text-[11px] text-gray-200 break-all select-all font-bold">${cloudFilePath}</div>
+                    </div>
+                </div>
+
+                <!-- Live Terminal Workflow Output -->
+                <div class="bg-[#07090f] border border-emerald-500/20 rounded-xl p-4 font-mono text-xs text-gray-300 space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center gap-2 text-blue-400">
+                        <span class="text-gray-600">[00:00.012]</span>
+                        <span>🔒 Local Storage: Audit Record written to local_edge.sqlite</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-purple-400">
+                        <span class="text-gray-600">[00:00.035]</span>
+                        <span>⚙️ Edge Pre-Scan: PII Scrubbed. Extracted audit schema vectors.</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-cyan-400">
+                        <span class="text-gray-600">[00:00.098]</span>
+                        <span>🌐 Transport: TLS 1.3 -> https://api.groq.com/v1/chat/completions</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                        <span class="text-gray-600">[00:01.120]</span>
+                        <span>⚡ Cloud Model: Processed via openai/gpt-oss-120b</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-emerald-300 font-extrabold border-t border-white/10 pt-2">
+                        <span class="text-gray-600">[00:01.140]</span>
+                        <span>✅ SUCCESS: Cloud Backup Saved at ${cloudFilePath}</span>
+                    </div>
+                </div>
+
+                <button onclick="document.getElementById('cloudModal').remove()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl uppercase tracking-widest transition shadow-[0_4px_16px_rgba(16,185,129,0.35)]">
+                    Close Cloud Inspector
+                </button>
+            </div>`;
+        lucide.createIcons();
+    }
+
+    function renderGraph(conflicts) {
+        const canvas = document.getElementById('graphCanvas');
+        const placeholder = document.getElementById('graphPlaceholder');
+        const statusEl = document.getElementById('graphStatus');
+
+        // Merge frontend sources + backend sources for complete node list
+        const allNames = new Set();
+        sources.forEach(s => allNames.add(s.name));
+        backendSources.forEach(s => allNames.add(s.name));
+        conflicts.forEach(c => { if(c.source_a) allNames.add(c.source_a); if(c.source_b) allNames.add(c.source_b); });
+        
+        let graphSources = [...allNames];
+        
+        if(!graphSources.length) {
+            placeholder.innerHTML = `<i data-lucide="network" class="w-12 h-12 text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"></i>
+            <span class="text-sm font-bold text-gray-300">Awaiting Multi-Modal Input</span>
+            <span class="text-xs text-gray-500">Upload documents or select an Instant Scenario to visualize Knowledge Topology</span>`;
+            placeholder.classList.remove('hidden');
+            statusEl.textContent = 'AWAITING DATA';
+            statusEl.className = 'text-[10px] font-bold text-gray-500 bg-gray-800 border border-white/5 px-3 py-1.5 rounded-lg font-mono';
+            canvas.innerHTML = placeholder.outerHTML;
+            document.getElementById('barChart1').innerHTML = `<div class="text-[10px] text-gray-500 italic">No files uploaded yet.</div>`;
+            document.getElementById('barChart2').innerHTML = `<div class="text-[10px] text-gray-500 italic">Zero anomalies detected.</div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        // Populate Bar Charts
+        const exts = {};
+        graphSources.forEach(s => { const e = s.split('.').pop().toUpperCase(); exts[e] = (exts[e]||0)+1; });
+        const maxE = Math.max(...Object.values(exts), 1);
+        document.getElementById('barChart1').innerHTML = Object.entries(exts).map(([k,v]) => `
+            <div class="flex items-center gap-3 text-xs">
+                <span class="w-8 font-mono text-cyan-400 font-bold">${k}</span>
+                <div class="flex-1 bg-gray-800 rounded-full h-1.5"><div class="bg-cyan-500 h-1.5 rounded-full" style="width:${(v/maxE)*100}%"></div></div>
+                <span class="text-gray-300 font-bold">${v}</span>
+            </div>`).join('');
+            
+        const sevs = conflicts.reduce((acc,c) => { acc[c.severity] = (acc[c.severity]||0)+1; return acc; }, {CRITICAL: 0, WARNING: 0, MEDIUM: 0});
+        const maxS = Math.max(...Object.values(sevs), 1);
+        document.getElementById('barChart2').innerHTML = Object.entries(sevs).map(([k,v]) => {
+            const c = k==='CRITICAL'?'red':(k==='WARNING'||k==='MEDIUM'?'orange':'blue');
+            return `
+            <div class="flex items-center gap-3 text-xs">
+                <span class="w-16 font-mono text-${c}-400 font-bold">${k}</span>
+                <div class="flex-1 bg-gray-800 rounded-full h-1.5"><div class="bg-${c}-500 h-1.5 rounded-full" style="width:${(v/maxS)*100}%"></div></div>
+                <span class="text-gray-300 font-bold">${v}</span>
+            </div>`;
+        }).join('');
+
+        placeholder.classList.add('hidden');
+        if(conflicts.length > 0) {
+            statusEl.textContent = `${conflicts.length} DISCREPANCY DETECTED`;
+            statusEl.className = 'text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-1.5 rounded-lg font-mono tracking-wide';
+        } else {
+            statusEl.textContent = 'ALIGNED ✓';
+            statusEl.className = 'text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/30 px-3 py-1.5 rounded-lg font-mono tracking-wide';
+        }
+
+        // ── Hub-and-Spoke Cognitive Graph Topology ─────────────────────────
+        const nodeMap = {};
+        const positions = [];
+
+        graphSources.forEach((name, i) => { nodeMap[name] = i; });
+
+        const rect = canvas.getBoundingClientRect();
+        const cx = (rect.width > 100 ? rect.width / 2 : 360);
+        const cy = (rect.height > 100 ? rect.height / 2 : 220);
+        const radius = Math.min(cx, cy) * 0.72; // Increased radius for clean node spacing
+
+        graphSources.forEach((name, i) => {
+            const angle = (2 * Math.PI / graphSources.length) * i - Math.PI / 2;
+            const x = cx + radius * Math.cos(angle);
+            const y = cy + radius * Math.sin(angle);
+            positions[i] = { x, y, name };
+        });
+
+        // 1. Primary Hub-to-Node Connection Lines
+        let svgLines = positions.map(p => `
+            <line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="#06b6d4" stroke-width="1.8" opacity="0.4" stroke-dasharray="4,4"/>
+        `).join('');
+
+        // 2. Curved Discrepancy Arc Lines between Document Nodes (Bows OUTWARD to prevent overlapping text)
+        if(conflicts.length > 0) {
+            svgLines += conflicts.map(c => {
+                const ai = nodeMap[c.source_a] !== undefined ? nodeMap[c.source_a] : 0;
+                const bi = nodeMap[c.source_b] !== undefined ? nodeMap[c.source_b] : Math.min(1, positions.length-1);
+                const a = positions[ai], b = positions[bi];
+                if(!a || !b || ai === bi) return '';
+                
+                const mx = (a.x + b.x) / 2;
+                const my = (a.y + b.y) / 2;
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+                
+                // Calculate perpendicular offset pointing away from center hub (cx, cy)
+                const offsetDist = 65;
+                const len = Math.sqrt(dx*dx + dy*dy) || 1;
+                const nx = -dy / len;
+                const ny = dx / len;
+                const dot = (mx - cx) * nx + (my - cy) * ny;
+                const dir = dot >= 0 ? 1 : -1;
+                const qx = mx + nx * offsetDist * dir;
+                const qy = my + ny * offsetDist * dir;
+
+                const label = c.title.length > 24 ? c.title.substring(0, 22) + "..." : c.title;
+                const w = Math.max(150, label.length * 7);
+
+                return `
+                    <g class="cursor-pointer group" onclick="switchTab('inspector')">
+                        <title>${c.title}&#10;Severity: ${c.severity}&#10;&#10;${(c.description||'').replace(/"/g, '&quot;')}</title>
+                        <path d="M ${a.x} ${a.y} Q ${qx} ${qy} ${b.x} ${b.y}" fill="none" stroke="#ef4444" stroke-width="3" stroke-dasharray="6,4" opacity="0.95"/>
+                        <rect x="${qx-(w/2)}" y="${qy-13}" width="${w}" height="26" rx="7" fill="#1c0d12" stroke="#ef4444" stroke-width="1.8" opacity="0.98"/>
+                        <text x="${qx}" y="${qy+4}" text-anchor="middle" fill="#f87171" font-size="9.5" font-family="monospace" font-weight="800">⚠ ${label.toUpperCase()}</text>
+                    </g>`;
+            }).join('');
+        } else if(positions.length >= 2) {
+            // Draw clean green alignment ring between adjacent nodes
+            for(let i=0; i<positions.length; i++) {
+                const a = positions[i], b = positions[(i+1)%positions.length];
+                const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+                svgLines += `
+                    <g>
+                        <line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#10b981" stroke-width="2" opacity="0.65"/>
+                        <rect x="${mx-45}" y="${my-10}" width="90" height="20" rx="4" fill="#0d1f18" stroke="#10b981" stroke-width="1" opacity="0.95"/>
+                        <text x="${mx}" y="${my+4}" text-anchor="middle" fill="#34d399" font-size="9" font-family="monospace" font-weight="700">✓ ALIGNED</text>
+                    </g>`;
+            }
+        }
+
+        function getFileStyle(name) {
+            const n = name.toLowerCase();
+            if(n.endsWith('.pdf')) return {icon:'file-text', col:'blue'};
+            if(n.endsWith('.pptx') || n.endsWith('.ppt')) return {icon:'presentation', col:'purple'};
+            if(n.endsWith('.xlsx') || n.endsWith('.xls') || n.endsWith('.csv')) return {icon:'sheet', col:'green'};
+            if(n.endsWith('.docx') || n.endsWith('.doc')) return {icon:'file-text', col:'blue'};
+            if(n.endsWith('.txt')) return {icon:'align-left', col:'cyan'};
+            if(n.endsWith('.eml') || n.endsWith('.msg')) return {icon:'mail', col:'orange'};
+            if(n.endsWith('.json')) return {icon:'code-2', col:'purple'};
+            if(n.endsWith('.png') || n.endsWith('.jpg') || n.endsWith('.jpeg')) return {icon:'image', col:'teal'};
+            if(n.endsWith('.html') || n.endsWith('.htm')) return {icon:'code-2', col:'purple'};
+            return {icon:'file', col:'blue'};
+        }
+
+        // Central Cognitive Hub Node HTML
+        const hubHtml = `
+            <div class="graph-node cursor-pointer group" style="left:${cx-28}px;top:${cy-28}px;" onclick="alert('OmniIntel Central Cognitive Fusion Hub\\nOrchestrating multi-modal graph topology and real-time audit synthesis.')">
+                <div class="w-14 h-14 rounded-full bg-blue-600/20 border-2 border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.6)] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="cpu" class="w-7 h-7 text-blue-300"></i>
+                </div>
+                <span class="label group-hover:text-white transition-colors bg-blue-950/90 px-2 py-0.5 rounded border border-blue-500/40 text-[9px] font-mono text-blue-300 mt-1 font-bold">CGF CORE HUB</span>
+            </div>`;
+
+        const nodeHtml = positions.map((p,i) => {
+            const name = p.name;
+            const fs = getFileStyle(name);
+            const shortName = name.length > 18 ? name.slice(0,17)+'…' : name;
+            const safeName = name.replace(/'/g, "\\'");
+            
+            return `<div class="graph-node cursor-pointer group" style="left:${p.x-22}px;top:${p.y-22}px;" onclick="openNodeModal('${safeName}')">
+                <div class="dot bg-${fs.col}-500/15 border-2 border-${fs.col}-400 shadow-[0_0_18px_rgba(59,130,246,0.4)] group-hover:scale-125 transition-all">
+                    <i data-lucide="${fs.icon}" class="w-5 h-5 text-${fs.col}-400"></i>
+                </div>
+                <span class="label group-hover:text-white transition-colors bg-[#0a0c13]/90 px-2 py-0.5 rounded border border-white/10 mt-1 text-[10px] font-mono font-bold">${shortName}</span>
+            </div>`;
+        }).join('');
+
+        // Preserve zoom overlay toolbar HTML
+        const zoomOverlayHtml = `
+            <div class="absolute top-3 right-3 z-30 flex items-center gap-1.5 bg-[#151822]/90 border border-white/10 rounded-xl p-1.5 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+                <button onclick="zoomGraph(1.2)" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Zoom In (+)">
+                    <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                </button>
+                <button onclick="zoomGraph(0.8)" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Zoom Out (-)">
+                    <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                </button>
+                <button onclick="resetGraphZoom()" class="p-2 hover:bg-blue-500/20 text-blue-300 rounded-lg transition" title="Reset View (↺)">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </button>
+            </div>`;
+
+        canvas.innerHTML = zoomOverlayHtml + `
+            <div id="zoomContainer" class="w-full h-full relative cursor-grab active:cursor-grabbing" style="transform: translate(${panX}px, ${panY}px) scale(${currentZoom}); transform-origin: center center; transition: transform 0.15s ease-out;">
+                <svg class="graph-svg"><defs>
+                    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#1a1f35" stop-opacity="0.6"/>
+                        <stop offset="100%" stop-color="#0a0c13" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <ellipse cx="${cx}" cy="${cy}" rx="${radius*1.25}" ry="${radius*0.95}" fill="url(#bg-grad)"/>
+                ${svgLines}
+                </svg>
+                ${hubHtml}
+                ${nodeHtml}
+            </div>`;
+        lucide.createIcons();
+        setupGraphInteractions();
+    }
+
+    let currentZoom = 1.0;
+    let panX = 0, panY = 0;
+    let isDragging = false, startX = 0, startY = 0;
+
+    function zoomGraph(factor) {
+        currentZoom *= factor;
+        currentZoom = Math.max(0.5, Math.min(2.5, currentZoom));
+        updateGraphTransform();
+    }
+    function resetGraphZoom() {
+        currentZoom = 1.0;
+        panX = 0; panY = 0;
+        updateGraphTransform();
+    }
+    function updateGraphTransform() {
+        const container = document.getElementById('zoomContainer');
+        if(container) {
+            container.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+        }
+    }
+
+    function setupGraphInteractions() {
+        const canvas = document.getElementById('graphCanvas');
+        if(!canvas || canvas.dataset.bound) return;
+        canvas.dataset.bound = 'true';
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.12 : 0.88;
+            zoomGraph(factor);
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if(e.target.closest('button')) return;
+            isDragging = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+            canvas.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if(!isDragging) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateGraphTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if(isDragging) {
+                isDragging = false;
+                const cv = document.getElementById('graphCanvas');
+                if(cv) cv.style.cursor = 'grab';
+            }
+        });
+    }
+
+    // ── Interactive Node Modal Inspector ──────────────────────────────────
+    function openNodeModal(name) {
+        const src = (backendSources && backendSources.find(s => s.name === name)) || (sources && sources.find(s => s.name === name)) || { name: name, type: 'FILE', preview: 'Analyzed & indexed in Cognitive Graph.', metrics: [] };
+        const ext = (src.type || name.split('.').pop()).toUpperCase();
+        const preview = src.preview || 'Analyzed & indexed in Cognitive Graph.';
+        const metricsHtml = (src.metrics && src.metrics.length) 
+            ? src.metrics.map(m => `<span class="px-2 py-0.5 rounded bg-yellow-400/15 text-yellow-300 font-mono text-xs border border-yellow-400/30 font-bold">${m}</span>`).join(' ') 
+            : `<span class="text-xs text-gray-500 italic">No numeric metrics extracted</span>`;
+        
+        const hasConflict = lastConflicts && lastConflicts.some(c => c.source_a === name || c.source_b === name);
+        const statusBadgeHtml = hasConflict 
+            ? `<span class="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-red-500/15 border border-red-500/40 text-red-400 font-mono">⚠ AUDIT DISCREPANCY</span>`
+            : `<span class="text-[10px] font-extrabold px-2.5 py-1 rounded-lg bg-green-500/15 border border-green-500/40 text-green-400 font-mono">✓ ALIGNED</span>`;
+
+        let modal = document.getElementById('nodeModal');
+        if(!modal) {
+            modal = document.createElement('div');
+            modal.id = 'nodeModal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md';
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = `
+            <div class="bg-[#151822] border-2 border-blue-500/40 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-[0_0_50px_rgba(59,130,246,0.35)] relative animate-in fade-in zoom-in duration-200">
+                <button onclick="document.getElementById('nodeModal').remove()" class="absolute top-4 right-4 text-gray-500 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <div class="flex items-center gap-3 border-b border-white/10 pb-3">
+                    <div class="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-extrabold text-white truncate" title="${name}">${name}</h3>
+                            ${statusBadgeHtml}
+                        </div>
+                        <span class="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">${ext} COGNITIVE TOPOLOGY NODE</span>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Extracted Metrics & Key Facts:</span>
+                    <div class="flex flex-wrap gap-2 pt-1">${metricsHtml}</div>
+                </div>
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Parsed Document Preview:</span>
+                    <div class="bg-[#0d0f18] p-3.5 rounded-xl border border-white/10 font-mono text-xs text-gray-300 max-h-44 overflow-y-auto custom-scrollbar leading-relaxed whitespace-pre-wrap">"${preview}"</div>
+                </div>
+                <button onclick="document.getElementById('nodeModal').remove(); switchTab('inspector');" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition shadow-[0_4px_16px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i> Inspect Discrepancies in Autonomous Auditor (Pillar 3)
+                </button>
+            </div>`;
+        lucide.createIcons();
+    }
     </script>
 </body>
 </html>

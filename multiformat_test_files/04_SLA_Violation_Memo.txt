@@ -1,0 +1,4 @@
+SUPPLY CHAIN DISCREPANCY AUDIT
+Shipment #LOG-9921 SLA Delivery Date: October 15, 2026.
+Carrier Notification Date: October 25, 2026.
+Violation: 10-Day SLA Delay detected.

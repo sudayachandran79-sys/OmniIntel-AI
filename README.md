@@ -16,22 +16,22 @@ Most document processing systems rely on basic Single-Document Retrieval (RAG). 
 
 ---
 
-## 🏗️ 4-Pillar Enterprise Architecture
+## 🏗️ The 5-Pillar Enterprise Architecture
 
-### 1. ⚙️ Multi-Engine Pipeline Architecture (The Core Engine)
-- **Hybrid Multi-Modal Parsing:** Integrates PyMuPDF, LayoutLM, and Tabular Transformers to ingest unstructured text (PDFs), semi-structured data (Emails), and structured financial spreadsheets (Excel/CSV).
-- **Cross-Modal Synthesizer:** Standardizes tabular numbers, raw text clauses, and metadata into unified dense vector spaces.
+### 1. 🧠 Cognitive Graph Fusion (CGF) with Cross-Modal Synthesizers
+- Fuses unstructured text (PDFs), semi-structured data (Emails), and structured financial spreadsheets (Excel/CSV) into a unified, contextual knowledge graph.
 
-### 2. 🔌 Intent-Based Semantic API Gateway (The Interface)
-- Translates natural user queries and operational intentions into structured graph traversals.
-- Powers the interactive **Side-by-Side Document Inspector** and split-screen evidence verification.
+### 2. ⚙️ Multi-Engine Pipeline Architecture (The Core Engine)
+- A robust 5-step pipelined process (Document, Extraction, Analysis, Validation, Output) ensuring data integrity before reasoning.
 
-### 3. 🛡️ Autonomous Drift & Conflict Resolver (The Auditor)
-- Continuously scans fused knowledge graphs for **Semantic Drift** and **Numeric Discrepancies**.
-- Automatically flags financial budget overages, delivery date contradictions, and missing compliance clauses across disparate files.
+### 3. 🔌 Intent-Based Semantic API Gateway (The Interface)
+- Translates natural user queries and operational intentions into structured graph traversals, routing requests intelligently.
 
-### 4. ☁️ Edge-to-Cloud Hybrid Deployment (The Infrastructure)
-- **Privacy-First Architecture:** Keeps sensitive enterprise documents and local extraction on-edge (local workspace) while utilizing scalable cloud AI synthesizers for complex reasoning.
+### 4. 🛡️ Autonomous Drift & Conflict Resolver (The Auditor)
+- Continuously scans fused knowledge graphs for **Semantic Drift** and **Numeric Discrepancies** (e.g. Budget overages, deadline mismatches).
+
+### 5. ☁️ Edge-to-Cloud Hybrid Deployment (The Infrastructure)
+- **Privacy-First Architecture:** Keeps sensitive enterprise documents on-edge while utilizing scalable cloud synthesizers for complex tasks.
 
 ---
 
