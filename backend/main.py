@@ -692,11 +692,16 @@ class MultiEnginePipeline:
 
         sources_payload = []
         for s in self.sources:
-            # Extract key metrics (percentages, amounts, dates)
+            # Extract rich key metrics & facts (percentages, amounts, standalone numbers, dates, terms)
             pcts = re.findall(r'\b\d+(?:\.\d+)?%\b', s.extracted_text)
-            dollars = re.findall(r'\$\s*[\d,]+(?:\.\d+)?\b', s.extracted_text)
+            dollars = re.findall(r'[\$₹€]\s*[\d,]+(?:\.\d+)?\b', s.extracted_text)
             dates = extract_dates(s.extracted_text)
-            metrics = list(dict.fromkeys(pcts + dollars + dates))[:8]
+            standalone_nums = re.findall(r'\b\d{2,}\b', s.extracted_text)
+            key_terms = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b', s.extracted_text)
+            filtered_terms = [t for t in key_terms if t.lower() not in {'this', 'that', 'with', 'from', 'have', 'were', 'been', 'date', 'file', 'document', 'policy', 'audit'}][:4]
+            
+            raw_metrics = pcts + dollars + dates + standalone_nums + filtered_terms
+            metrics = list(dict.fromkeys(raw_metrics))[:8]
             sources_payload.append({
                 "name": s.filename,
                 "type": s.file_type,
