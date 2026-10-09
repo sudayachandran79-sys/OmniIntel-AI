@@ -35,6 +35,10 @@
                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
                     <span class="text-gray-600 font-mono">Status: Ready</span>
                 </div>
+                <button onclick="saveToCloud()" id="cloudSaveBtn" class="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded border border-gray-300 transition flex items-center gap-1.5">
+                    <i data-lucide="cloud-upload" class="w-3.5 h-3.5 text-blue-600" id="cloudIcon"></i>
+                    <span id="cloudText">Edge-to-Cloud Save</span>
+                </button>
                 <button onclick="openScenarioModal()" class="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded border border-gray-300 transition flex items-center gap-1.5">
                     <i data-lucide="folder-kanban" class="w-3.5 h-3.5 text-blue-600"></i>
                     <span>Load Preset</span>
@@ -148,8 +152,15 @@
 
                 <!-- Tab 1: Graph -->
                 <div id="content-graph" class="space-y-4">
-                    <div class="bg-gray-50 border border-gray-200 rounded p-6 min-h-[340px] flex flex-col items-center justify-center relative">
-                        <div class="relative z-10 w-full max-w-xl space-y-10">
+                    <div class="bg-gray-50 border border-gray-200 rounded p-6 min-h-[340px] flex flex-col items-center justify-center relative overflow-hidden cursor-grab" id="graphContainer">
+                        <!-- Toolbar -->
+                        <div class="absolute top-4 right-4 z-20 flex bg-white border border-gray-300 rounded shadow-sm">
+                            <button onclick="zoomGraph(0.1)" class="p-1.5 hover:bg-gray-100 text-gray-600 border-r border-gray-300"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+                            <button onclick="zoomGraph(-0.1)" class="p-1.5 hover:bg-gray-100 text-gray-600 border-r border-gray-300"><i data-lucide="zoom-out" class="w-4 h-4"></i></button>
+                            <button onclick="resetGraphView()" class="p-1.5 hover:bg-gray-100 text-gray-600"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                        </div>
+
+                        <div id="graphContent" class="relative z-10 w-full max-w-xl space-y-10 transition-transform duration-75">
                             <div class="flex justify-between items-center">
                                 <div class="p-3 bg-white border border-gray-300 rounded text-center shadow-sm w-36">
                                     <i data-lucide="file-text" class="w-5 h-5 text-gray-700 mx-auto"></i>
@@ -261,9 +272,17 @@
             { name: "Approval_Thread.eml", ext: "EML", size: "85 KB", engine: "Email", icon: "mail", color: "orange" }
         ];
 
+        let graphScale = 1;
+        let graphPanX = 0;
+        let graphPanY = 0;
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             renderSourcesList();
+            initGraphInteraction();
             
             const dz = document.getElementById('dropZone');
             if(dz) {
@@ -305,6 +324,100 @@
             if (['PNG', 'JPG', 'JPEG', 'WEBP', 'BMP', 'TIFF'].includes(ext)) return { ext, engine: 'Vision OCR Engine', icon: 'image', color: 'teal' };
             if (['ZIP', 'RAR', '7Z', 'TAR', 'GZ'].includes(ext)) return { ext, engine: 'Archive Deep Scanner', icon: 'archive', color: 'indigo' };
             return { ext, engine: 'Universal Document Reader', icon: 'file', color: 'gray' };
+        }
+
+        function initGraphInteraction() {
+            const container = document.getElementById('graphContainer');
+            if(!container) return;
+
+            container.addEventListener('mousedown', (e) => {
+                // Ignore if clicked on buttons
+                if(e.target.closest('button')) return;
+
+                isPanning = true;
+                container.classList.remove('cursor-grab');
+                container.classList.add('cursor-grabbing');
+                startX = e.clientX - graphPanX;
+                startY = e.clientY - graphPanY;
+            });
+
+            window.addEventListener('mouseup', () => {
+                isPanning = false;
+                container.classList.remove('cursor-grabbing');
+                container.classList.add('cursor-grab');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                e.preventDefault();
+                graphPanX = e.clientX - startX;
+                graphPanY = e.clientY - startY;
+                updateGraphTransform();
+            });
+
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                zoomGraph(delta);
+            });
+        }
+
+        function zoomGraph(delta) {
+            graphScale += delta;
+            if (graphScale < 0.5) graphScale = 0.5;
+            if (graphScale > 3) graphScale = 3;
+            updateGraphTransform();
+        }
+
+        function resetGraphView() {
+            graphScale = 1;
+            graphPanX = 0;
+            graphPanY = 0;
+            updateGraphTransform();
+        }
+
+        function updateGraphTransform() {
+            const content = document.getElementById('graphContent');
+            if(content) {
+                content.style.transform = `translate(${graphPanX}px, ${graphPanY}px) scale(${graphScale})`;
+            }
+        }
+
+        function saveToCloud() {
+            const text = document.getElementById('cloudText');
+            let icon = document.getElementById('cloudIcon');
+            if(!icon) icon = document.querySelector('#cloudSaveBtn svg');
+
+            // UI Loading state
+            icon.setAttribute('data-lucide', 'loader');
+            icon.classList.add('animate-spin');
+            text.innerText = "Syncing to Cloud...";
+            lucide.createIcons();
+
+            setTimeout(() => {
+                // Success state
+                let currentIcon = document.getElementById('cloudIcon');
+                if(!currentIcon) currentIcon = document.querySelector('#cloudSaveBtn svg');
+                if (currentIcon) {
+                    currentIcon.classList.remove('animate-spin');
+                    currentIcon.classList.replace('text-blue-600', 'text-green-600');
+                    currentIcon.setAttribute('data-lucide', 'check-circle');
+                }
+                text.innerText = "Saved to Cloud";
+                lucide.createIcons();
+
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    let resetIcon = document.getElementById('cloudIcon');
+                    if(!resetIcon) resetIcon = document.querySelector('#cloudSaveBtn svg');
+                    if (resetIcon) {
+                        resetIcon.classList.replace('text-green-600', 'text-blue-600');
+                        resetIcon.setAttribute('data-lucide', 'cloud-upload');
+                    }
+                    text.innerText = "Edge-to-Cloud Save";
+                    lucide.createIcons();
+                }, 3000);
+            }, 1500);
         }
 
         function formatFileSize(bytes) {
