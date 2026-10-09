@@ -977,10 +977,21 @@
         const statusEl = document.getElementById('graphStatus');
 
         // Merge frontend sources + backend sources for complete node list
+        if (!sources.length && !backendSources.length) {
+            lastConflicts = [];
+            conflicts = [];
+        }
+
         const allNames = new Set();
         sources.forEach(s => allNames.add(s.name));
         backendSources.forEach(s => allNames.add(s.name));
-        conflicts.forEach(c => { if(c.source_a) allNames.add(c.source_a); if(c.source_b) allNames.add(c.source_b); });
+        
+        if (allNames.size > 0 && conflicts) {
+            conflicts.forEach(c => {
+                if(c.source_a && (sources.some(s=>s.name===c.source_a) || backendSources.some(s=>s.name===c.source_a))) allNames.add(c.source_a);
+                if(c.source_b && (sources.some(s=>s.name===c.source_b) || backendSources.some(s=>s.name===c.source_b))) allNames.add(c.source_b);
+            });
+        }
         
         let graphSources = [...allNames];
         
