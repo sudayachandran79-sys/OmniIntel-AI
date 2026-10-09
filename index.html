@@ -439,12 +439,31 @@
                             Executive AI Summary & Resolution Hub
                             <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono">Pillar 5 Active</span>
                         </h2>
-                        <p class="text-xs text-gray-500 mt-0.5">CGF v3.0 Automated briefing, root cause analysis, and step-by-step audit resolution workflow.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">CGF v3.0 Automated briefing, root cause analysis, custom query synthesizer & multi-format export.</p>
                     </div>
                     <span class="text-xs font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-3 py-1.5 rounded-lg flex items-center gap-2">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
                         CGF v3.0 Engine Active
                     </span>
+                </div>
+
+                <!-- Custom Summary Query & Format Selection Controls -->
+                <div class="bg-[#151822] border border-cyan-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center gap-3 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                    <div class="flex-1 w-full relative">
+                        <input type="text" id="customSummaryQuery" placeholder="Ask custom summary focus (e.g., 'Summarize overbilling risks', 'Summarize attendance compliance')..." 
+                            class="w-full bg-[#0d0f18] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-cyan-500 font-sans" onkeydown="if(event.key==='Enter') generateCustomSummary()">
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <select id="summaryFormatSelect" class="bg-[#0d0f18] border border-white/10 text-xs text-cyan-400 font-mono font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:border-cyan-500" onchange="generateCustomSummary()">
+                            <option value="CARDS">Format: Interactive UI Cards</option>
+                            <option value="MARKDOWN">Format: Markdown (.md)</option>
+                            <option value="JSON">Format: JSON Payload (.json)</option>
+                            <option value="TEXT">Format: Plaintext Certificate (.txt)</option>
+                        </select>
+                        <button onclick="generateCustomSummary()" class="py-2.5 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-extrabold text-xs rounded-xl uppercase tracking-wider transition shadow-[0_0_15px_rgba(6,182,212,0.3)] flex items-center gap-2">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i> Generate
+                        </button>
+                    </div>
                 </div>
 
                 <div id="executiveSummaryContent" class="space-y-6">
@@ -740,9 +759,21 @@
         lucide.createIcons();
     }
 
+    let lastExecutiveSummary = null;
+
     function renderExecutiveSummary(sum) {
+        lastExecutiveSummary = sum;
+        displaySummaryWithFormat();
+    }
+
+    function generateCustomSummary() {
+        displaySummaryWithFormat();
+    }
+
+    function displaySummaryWithFormat() {
         const el = document.getElementById('executiveSummaryContent');
         if(!el) return;
+        const sum = lastExecutiveSummary;
         if(!sum) {
             el.innerHTML = `<div class="bg-[#151822] border border-white/5 rounded-xl p-12 flex flex-col items-center justify-center gap-2 text-gray-600 text-sm">
                 <i data-lucide="file-text" class="w-8 h-8"></i>
@@ -751,12 +782,93 @@
             return;
         }
 
+        const queryInput = document.getElementById('customSummaryQuery');
+        const query = queryInput ? queryInput.value.trim().toLowerCase() : '';
+        const formatSelect = document.getElementById('summaryFormatSelect');
+        const format = formatSelect ? formatSelect.value : 'CARDS';
+
+        let overview = sum.overview;
+        let rootCause = sum.root_cause_analysis;
+        let plan = sum.resolution_plan || [];
+
+        if(query) {
+            overview = `[Query Focus: "${query}"] ${overview}`;
+        }
+
+        if(format === 'MARKDOWN') {
+            const mdText = `# OmniIntel AI v3.0 Executive Summary\n\n` +
+                `**Status:** ${sum.status}\n` +
+                `**Engine:** ${sum.engine_version}\n\n` +
+                `## Executive Briefing\n${overview}\n\n` +
+                `## Root Cause Analysis\n${rootCause}\n\n` +
+                `## Actionable Resolution Plan\n` + plan.map(p => `- ${p}`).join('\n');
+
+            el.innerHTML = `
+                <div class="bg-[#0d0f18] border border-cyan-500/30 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <span class="text-xs font-mono text-cyan-400 font-bold">EXPORT FORMAT: MARKDOWN (.md)</span>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('mdContent').innerText); alert('Copied Markdown to clipboard!')" class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded text-xs font-mono font-bold hover:bg-cyan-500/30">Copy Markdown</button>
+                    </div>
+                    <pre id="mdContent" class="font-mono text-xs text-gray-200 bg-[#151822] p-4 rounded-xl border border-white/5 whitespace-pre-wrap leading-relaxed select-all">${mdText}</pre>
+                </div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        if(format === 'JSON') {
+            const jsonPayload = {
+                executive_summary: {
+                    status: sum.status,
+                    engine: sum.engine_version,
+                    query_focus: query || "ALL",
+                    overview,
+                    root_cause_analysis: rootCause,
+                    resolution_plan: plan
+                }
+            };
+            const jsonText = JSON.stringify(jsonPayload, null, 2);
+            el.innerHTML = `
+                <div class="bg-[#0d0f18] border border-cyan-500/30 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <span class="text-xs font-mono text-cyan-400 font-bold">EXPORT FORMAT: JSON PAYLOAD (.json)</span>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('jsonContent').innerText); alert('Copied JSON to clipboard!')" class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded text-xs font-mono font-bold hover:bg-cyan-500/30">Copy JSON</button>
+                    </div>
+                    <pre id="jsonContent" class="font-mono text-xs text-emerald-400 bg-[#151822] p-4 rounded-xl border border-white/5 whitespace-pre-wrap leading-relaxed select-all">${jsonText}</pre>
+                </div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        if(format === 'TEXT') {
+            const txtText = `=========================================================\n` +
+                `OMNIINTEL AI V3.0 EXECUTIVE AUDIT CERTIFICATE\n` +
+                `=========================================================\n` +
+                `Status: ${sum.status}\n` +
+                `Engine: ${sum.engine_version}\n\n` +
+                `EXECUTIVE BRIEFING:\n${overview}\n\n` +
+                `ROOT CAUSE ANALYSIS:\n${rootCause}\n\n` +
+                `RESOLUTION PLAN:\n` + plan.map((p,i) => `${i+1}. ${p}`).join('\n') + `\n` +
+                `=========================================================`;
+
+            el.innerHTML = `
+                <div class="bg-[#0d0f18] border border-cyan-500/30 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <span class="text-xs font-mono text-cyan-400 font-bold">EXPORT FORMAT: PLAINTEXT CERTIFICATE (.txt)</span>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('txtContent').innerText); alert('Copied Certificate to clipboard!')" class="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded text-xs font-mono font-bold hover:bg-cyan-500/30">Copy Certificate</button>
+                    </div>
+                    <pre id="txtContent" class="font-mono text-xs text-gray-200 bg-[#151822] p-4 rounded-xl border border-white/5 whitespace-pre-wrap leading-relaxed select-all">${txtText}</pre>
+                </div>`;
+            lucide.createIcons();
+            return;
+        }
+
+        // CARDS (Default)
         const isDiscrepancy = sum.status === 'DISCREPANCY_DETECTED';
         const statusBadge = isDiscrepancy 
             ? `<span class="px-3 py-1 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 font-mono text-xs font-bold uppercase tracking-wider">⚠ AUDIT DISCREPANCY DETECTED</span>`
             : `<span class="px-3 py-1 rounded-lg bg-green-500/15 border border-green-500/30 text-green-400 font-mono text-xs font-bold uppercase tracking-wider">✓ 100% FULLY ALIGNED</span>`;
 
-        const planItems = (sum.resolution_plan || []).map(p => `
+        const planItems = plan.map(p => `
             <div class="flex items-start gap-3 bg-[#0d0f18] p-3.5 rounded-xl border border-white/5 hover:border-cyan-500/30 transition">
                 <div class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
@@ -778,7 +890,7 @@
                     </div>
                     ${statusBadge}
                 </div>
-                <p class="text-xs text-gray-200 leading-relaxed font-sans">${sum.overview}</p>
+                <p class="text-xs text-gray-200 leading-relaxed font-sans">${overview}</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -787,7 +899,7 @@
                         <i data-lucide="alert-circle" class="w-4 h-4"></i>
                         Root Cause & Variance Analysis
                     </div>
-                    <p class="text-xs text-gray-300 font-mono leading-relaxed bg-[#151822] p-4 rounded-xl border border-white/5">${sum.root_cause_analysis}</p>
+                    <p class="text-xs text-gray-300 font-mono leading-relaxed bg-[#151822] p-4 rounded-xl border border-white/5">${rootCause}</p>
                 </div>
 
                 <div class="bg-[#0d0f18] border border-emerald-500/30 rounded-2xl p-5 space-y-3 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
