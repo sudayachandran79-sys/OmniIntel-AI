@@ -29,6 +29,7 @@ class OmniIntelHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/" or parsed.path == "/index.html":
+            global_engine.sources.clear()
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
