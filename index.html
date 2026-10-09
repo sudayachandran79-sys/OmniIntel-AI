@@ -55,7 +55,7 @@
             <nav class="p-4 space-y-3 flex-1">
                 <div class="flex items-center justify-between px-2 mb-1">
                     <p class="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest font-mono">Cognitive Pillars</p>
-                    <span class="text-[9px] bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono px-2 py-0.5 rounded">4 Active</span>
+                    <span class="text-[9px] bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono px-2 py-0.5 rounded">5 Active</span>
                 </div>
 
                 <!-- Pillar 1 -->
@@ -85,7 +85,7 @@
                         </div>
                         <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold">PILLAR 2</span>
                     </div>
-                    <p class="text-[11px] text-gray-500 pl-9">Cognitive Graph Fusion 2D Topology</p>
+                    <p class="text-[11px] text-gray-500 pl-9">Cognitive Graph Fusion 3D Topology</p>
                 </button>
 
                 <!-- Pillar 3 -->
@@ -120,13 +120,28 @@
                     </div>
                     <p class="text-[11px] text-gray-500 pl-9">Local Storage & Cloud LLM Sync</p>
                 </button>
+
+                <!-- Pillar 5 -->
+                <button onclick="switchTab('summary')" id="tab-summary"
+                    class="nav-btn w-full flex flex-col gap-1 p-3.5 rounded-xl text-left transition border border-white/5 hover:border-cyan-500/30 hover:bg-cyan-900/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 rounded-lg bg-gray-800 text-gray-400 border border-white/10 group-hover:text-cyan-400">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm font-bold text-gray-300">Executive AI Summary</span>
+                        </div>
+                        <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-bold">PILLAR 5</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 pl-9">Root Cause & Resolution Plan</p>
+                </button>
             </nav>
 
             <!-- sidebar footer -->
             <div class="p-4 border-t border-white/5 bg-[#0d0f18]/60">
                 <div class="flex items-center justify-between text-[11px] text-gray-400 font-mono">
                     <span>Architecture Engine:</span>
-                    <span class="text-cyan-400 font-bold">CGF v2.0</span>
+                    <span class="text-cyan-400 font-bold">CGF v3.0</span>
                 </div>
             </div>
         </aside>
@@ -416,6 +431,30 @@
                 </div>
             </div>
 
+            <!-- ─── TAB: EXECUTIVE AI SUMMARY (PILLAR 5) ─── -->
+            <div id="view-summary" class="hidden p-8 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                            Executive AI Summary & Resolution Hub
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono">Pillar 5 Active</span>
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-0.5">CGF v3.0 Automated briefing, root cause analysis, and step-by-step audit resolution workflow.</p>
+                    </div>
+                    <span class="text-xs font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        CGF v3.0 Engine Active
+                    </span>
+                </div>
+
+                <div id="executiveSummaryContent" class="space-y-6">
+                    <div class="bg-[#151822] border border-white/5 rounded-xl p-12 flex flex-col items-center justify-center gap-2 text-gray-600 text-sm">
+                        <i data-lucide="file-text" class="w-8 h-8"></i>
+                        <span>No summary generated yet. Upload documents or run the pipeline first.</span>
+                    </div>
+                </div>
+            </div>
+
         </section>
     </main>
 
@@ -468,7 +507,7 @@
 
     // ── Tab Switching ──────────────────────────────────────────────────
     function switchTab(t) {
-        const tabs = ['ingestion','graph','inspector','actions'];
+        const tabs = ['ingestion','graph','inspector','actions','summary'];
         tabs.forEach(id => {
             const view = document.getElementById('view-' + id);
             const btn  = document.getElementById('tab-' + id);
@@ -524,6 +563,8 @@
             fetch('http://localhost:8000/api/upload', { method:'POST', body:fd }).catch(()=>{});
         });
         renderStreams();
+        playBeep(true);
+        switchTab('graph'); // Auto-switch to Pillar 2 Semantic Gateway on upload!
     }
 
     function renderStreams() {
@@ -565,6 +606,7 @@
         lastConflicts = [];
         renderStreams();
         renderAll({ sources: [], contradictions: [], evidence: {money:[], dates:[]}, actions: [] });
+        renderExecutiveSummary(null);
         fetch('http://localhost:8000/api/clear', { method: 'POST' }).catch(()=>{});
     }
 
@@ -580,6 +622,8 @@
                     return { name: f.name, ext, size: f.size || '1 KB', engine: meta.engine, icon: meta.icon, color: meta.color };
                 });
                 renderStreams();
+                playBeep(true);
+                switchTab('graph'); // Auto-switch to Pillar 2 on preset load!
                 setTimeout(() => {
                     runPipeline();
                 }, 300);
@@ -650,6 +694,9 @@
             }
             
             renderAll(data);
+            if(data.executive_summary) {
+                renderExecutiveSummary(data.executive_summary);
+            }
             
             // Beep + Flash
             const hasConflicts = (data.contradictions || []).length > 0;
@@ -661,10 +708,10 @@
                 flashScreen('#22c55e');
             }
             
-            switchTab('inspector');
+            switchTab('graph'); // Land cleanly on Pillar 2 Semantic Gateway
         } catch(e) {
             console.error(e);
-            switchTab('inspector');
+            switchTab('graph');
         }
     }
 
@@ -690,6 +737,67 @@
         renderEvidence(evidence, bSources, conflicts);
         renderActions(actions);
         renderGraph(conflicts);
+        lucide.createIcons();
+    }
+
+    function renderExecutiveSummary(sum) {
+        const el = document.getElementById('executiveSummaryContent');
+        if(!el) return;
+        if(!sum) {
+            el.innerHTML = `<div class="bg-[#151822] border border-white/5 rounded-xl p-12 flex flex-col items-center justify-center gap-2 text-gray-600 text-sm">
+                <i data-lucide="file-text" class="w-8 h-8"></i>
+                <span>No executive summary generated yet. Upload documents or run the pipeline first.</span>
+            </div>`;
+            return;
+        }
+
+        const isDiscrepancy = sum.status === 'DISCREPANCY_DETECTED';
+        const statusBadge = isDiscrepancy 
+            ? `<span class="px-3 py-1 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 font-mono text-xs font-bold uppercase tracking-wider">⚠ AUDIT DISCREPANCY DETECTED</span>`
+            : `<span class="px-3 py-1 rounded-lg bg-green-500/15 border border-green-500/30 text-green-400 font-mono text-xs font-bold uppercase tracking-wider">✓ 100% FULLY ALIGNED</span>`;
+
+        const planItems = (sum.resolution_plan || []).map(p => `
+            <div class="flex items-start gap-3 bg-[#0d0f18] p-3.5 rounded-xl border border-white/5 hover:border-cyan-500/30 transition">
+                <div class="p-2 rounded-lg bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shrink-0">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                </div>
+                <p class="text-xs text-gray-200 font-medium pt-1 leading-relaxed">${p}</p>
+            </div>`).join('');
+
+        el.innerHTML = `
+            <div class="bg-[#0d0f18] border-2 border-cyan-500/40 rounded-2xl p-6 space-y-4 shadow-[0_0_30px_rgba(6,182,212,0.15)] relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                            <i data-lucide="sparkles" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-white text-base">CGF v3.0 Executive Briefing</h3>
+                            <p class="text-[10px] text-gray-400 font-mono">${sum.engine_version || 'Cognitive Graph Fusion v3.0'}</p>
+                        </div>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <p class="text-xs text-gray-200 leading-relaxed font-sans">${sum.overview}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="bg-[#0d0f18] border border-red-500/30 rounded-2xl p-5 space-y-3 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                    <div class="flex items-center gap-2 text-red-400 font-bold text-xs uppercase tracking-wider border-b border-white/5 pb-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        Root Cause & Variance Analysis
+                    </div>
+                    <p class="text-xs text-gray-300 font-mono leading-relaxed bg-[#151822] p-4 rounded-xl border border-white/5">${sum.root_cause_analysis}</p>
+                </div>
+
+                <div class="bg-[#0d0f18] border border-emerald-500/30 rounded-2xl p-5 space-y-3 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                    <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider border-b border-white/5 pb-2">
+                        <i data-lucide="list-checks" class="w-4 h-4"></i>
+                        Automated Step-by-Step Resolution Plan
+                    </div>
+                    <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">${planItems}</div>
+                </div>
+            </div>`;
         lucide.createIcons();
     }
 
@@ -994,6 +1102,8 @@
         }
         
         let graphSources = [...allNames];
+        // Group & cluster nodes by format extension
+        graphSources.sort((a, b) => (a.split('.').pop().toLowerCase()).localeCompare(b.split('.').pop().toLowerCase()));
         
         if(!graphSources.length) {
             placeholder.innerHTML = `<i data-lucide="network" class="w-12 h-12 text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]"></i>
